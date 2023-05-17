@@ -1,19 +1,24 @@
-#ifndef NORMALIZATION_LAYER_H
-#define NORMALIZATION_LAYER_H
+#pragma once
+
 
 #include "image.h"
 #include "layer.h"
 #include "network.h"
 
-layer make_normalization_layer(int batch, int w, int h, int c, int size, float alpha, float beta, float kappa);
-void resize_normalization_layer(layer *layer, int h, int w);
-void forward_normalization_layer(const layer layer, network net);
-void backward_normalization_layer(const layer layer, network net);
-void visualize_normalization_layer(layer layer, char *window);
+struct normalization_layer:public layer{
+  void forward(network net);
+  void backward(network net);
+  void resize(int h, int w);
+  void visualize(char *window) const;
+};
+
+normalization_layer* make_normalization_layer(int batch,
+                                              int w, int h, int c, int size,
+                                              float alpha, float beta, float kappa);
+
+
 
 #ifdef GPU
 void forward_normalization_layer_gpu(const layer layer, network net);
 void backward_normalization_layer_gpu(const layer layer, network net);
-#endif
-
 #endif

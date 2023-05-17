@@ -130,23 +130,21 @@ int find_arg(int argc, char* argv[], char *arg)
     return 0;
 }
 
-int find_int_arg(int argc, char **argv, char *arg, int def)
-{
-    int i;
-    for(i = 0; i < argc-1; ++i){
-        if(!argv[i]) continue;
-        if(0==strcmp(argv[i], arg)){
-            def = atoi(argv[i+1]);
-            del_arg(argc, argv, i);
-            del_arg(argc, argv, i);
-            break;
-        }
+int find_int_arg(int argc, char **argv, const char *arg, int def){
+  int i;
+  for(i = 0; i < argc-1; ++i){
+    if(!argv[i]) continue;
+    if(0==strcmp(argv[i], arg)){
+      def = atoi(argv[i+1]);
+      del_arg(argc, argv, i);
+      del_arg(argc, argv, i);
+      break;
     }
-    return def;
+  }
+  return def;
 }
 
-float find_float_arg(int argc, char **argv, char *arg, float def)
-{
+float find_float_arg(int argc, char **argv, char *arg, float def){
     int i;
     for(i = 0; i < argc-1; ++i){
         if(!argv[i]) continue;
@@ -160,48 +158,43 @@ float find_float_arg(int argc, char **argv, char *arg, float def)
     return def;
 }
 
-char *find_char_arg(int argc, char **argv, char *arg, char *def)
-{
-    int i;
-    for(i = 0; i < argc-1; ++i){
-        if(!argv[i]) continue;
-        if(0==strcmp(argv[i], arg)){
-            def = argv[i+1];
-            del_arg(argc, argv, i);
-            del_arg(argc, argv, i);
-            break;
-        }
+char *find_char_arg(int argc, char **argv, const char *arg, char *def){
+  int i;
+  for(i = 0; i < argc-1; ++i){
+    if(!argv[i]) continue;
+    if(0==strcmp(argv[i], arg)){
+      def = argv[i+1];
+      del_arg(argc, argv, i);
+      del_arg(argc, argv, i);
+      break;
     }
-    return def;
+  }
+  return def;
 }
 
 
-char *basecfg(char *cfgfile)
-{
-    char *c = cfgfile;
-    char *next;
-    while((next = strchr(c, '/')))
+char *basecfg(char *cfgfile){
+  char *c = cfgfile;
+  char *next;
+  while((next = strchr(c, '/')))
     {
-        c = next+1;
+      c = next+1;
     }
-    c = copy_string(c);
-    next = strchr(c, '.');
-    if (next) *next = 0;
-    return c;
+  c = copy_string(c);
+  next = strchr(c, '.');
+  if (next) *next = 0;
+  return c;
 }
 
-int alphanum_to_int(char c)
-{
+int alphanum_to_int(char c){
     return (c < 58) ? c - 48 : c-87;
 }
-char int_to_alphanum(int i)
-{
+char int_to_alphanum(int i){
     if (i == 36) return '.';
     return (i < 10) ? i + 48 : i + 87;
 }
 
-void pm(int M, int N, float *A)
-{
+void pm(int M, int N, float *A){
     int i,j;
     for(i =0 ; i < M; ++i){
         printf("%d ", i+1);
@@ -213,52 +206,53 @@ void pm(int M, int N, float *A)
     printf("\n");
 }
 
-void find_replace(char *str, char *orig, char *rep, char *output)
-{
-    char buffer[4096] = {0};
-    char *p;
+void find_replace(char *str,
+                  const char *orig, const char *rep,
+                  char *output);
 
-    sprintf(buffer, "%s", str);
-    if(!(p = strstr(buffer, orig))){  // Is 'orig' even in 'str'?
-        sprintf(output, "%s", str);
-        return;
+void find_replace(char *str,
+                  const char *orig, const char *rep,
+                  char *output){
+  char buffer[4096] = {0};
+  char *p;
+
+  sprintf(buffer, "%s", str);
+  if(!(p = strstr(buffer, orig))){  // Is 'orig' even in 'str'?
+    sprintf(output, "%s", str);
+    return;
+  }
+
+  *p = '\0';
+
+  sprintf(output, "%s%s%s", buffer, rep, p+strlen(orig));
+}
+
+float sec(clock_t clocks){
+  return (float)clocks/CLOCKS_PER_SEC;
+}
+
+void top_k(float *a, int n, int k, int *index){
+  for(int j = 0; j < k; ++j) index[j] = -1;
+  
+  for(int i = 0; i < n; ++i){
+    int curr = i;
+    for(int j = 0; j < k; ++j){
+      if((index[j] < 0) || a[curr] > a[index[j]]){
+        int swap = curr;
+        curr = index[j];
+        index[j] = swap;
+      }
     }
-
-    *p = '\0';
-
-    sprintf(output, "%s%s%s", buffer, rep, p+strlen(orig));
+  }
 }
 
-float sec(clock_t clocks)
-{
-    return (float)clocks/CLOCKS_PER_SEC;
-}
-
-void top_k(float *a, int n, int k, int *index)
-{
-    int i,j;
-    for(j = 0; j < k; ++j) index[j] = -1;
-    for(i = 0; i < n; ++i){
-        int curr = i;
-        for(j = 0; j < k; ++j){
-            if((index[j] < 0) || a[curr] > a[index[j]]){
-                int swap = curr;
-                curr = index[j];
-                index[j] = swap;
-            }
-        }
-    }
-}
-
-void error(const char *s)
-{
+void error(const char *s){
     perror(s);
     assert(0);
     exit(-1);
 }
 
-unsigned char *read_file(char *filename)
-{
+unsigned char *read_file(char *filename){
     FILE *fp = fopen(filename, "rb");
     size_t size;
 
@@ -272,8 +266,7 @@ unsigned char *read_file(char *filename)
     return text;
 }
 
-void malloc_error()
-{
+void malloc_error(){
     fprintf(stderr, "Malloc error\n");
     exit(-1);
 }

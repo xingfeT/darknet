@@ -5,11 +5,17 @@
 #include "layer.h"
 #include "network.h"
 
-layer make_yolo_layer(int batch, int w, int h, int n, int total, int *mask, int classes);
-void forward_yolo_layer(const layer l, network net);
-void backward_yolo_layer(const layer l, network net);
-void resize_yolo_layer(layer *l, int w, int h);
-int yolo_num_detections(layer l, float thresh);
+
+struct yolo_layer:public layer{
+  void forward(network net);
+  void backward(network net);
+  void resize(int w, int h);
+  int yolo_num_detections(float thresh) const ;
+};
+yolo_layer* make_yolo_layer(int batch, int w, int h, int n, int total, int *mask, int classes);
+
+
+
 
 #ifdef GPU
 void forward_yolo_layer_gpu(const layer l, network net);

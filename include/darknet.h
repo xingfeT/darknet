@@ -110,18 +110,94 @@ struct network;
 typedef struct network network;
 
 struct layer;
-typedef struct layer layer;
+  
+  
+ 
+  //void free_layer(layer);
 
-struct layer{
+typedef enum {
+    CONSTANT, STEP, EXP, POLY, STEPS, SIG, RANDOM
+} learning_rate_policy;
+  struct layer;
+  
+typedef struct network{
+    int n;
+    int batch;
+    size_t *seen;
+    int *t;
+    float epoch;
+    int subdivisions;
+    layer **layers;
+    float *output;
+    learning_rate_policy policy;
+
+    float learning_rate;
+    float momentum;
+    float decay;
+    float gamma;
+    float scale;
+    float power;
+    int time_steps;
+    int step;
+    int max_batches;
+    float *scales;
+    int   *steps;
+    int num_steps;
+    int burn_in;
+
+    int adam;
+    float B1;
+    float B2;
+    float eps;
+
+    int inputs;
+    int outputs;
+    int truths;
+    int notruth;
+    int h, w, c;
+    int max_crop;
+    int min_crop;
+    float max_ratio;
+    float min_ratio;
+    int center;
+    float angle;
+    float aspect;
+    float exposure;
+    float saturation;
+    float hue;
+    int random;
+
+    int gpu_index;
+    tree *hierarchy;
+
+    float *input;
+    float *truth;
+    float *delta;
+    float *workspace;
+    int train;
+    int index;
+    float *cost;
+    float clip;
+
+#ifdef GPU
+    float *input_gpu;
+    float *truth_gpu;
+    float *delta_gpu;
+    float *output_gpu;
+#endif
+
+} network;
+
+   struct layer{
     LAYER_TYPE type;
     ACTIVATION activation;
     COST_TYPE cost_type;
-    void (*forward)   (struct layer, struct network);
-    void (*backward)  (struct layer, struct network);
-    void (*update)    (struct layer, update_args);
-    void (*forward_gpu)   (struct layer, struct network);
-    void (*backward_gpu)  (struct layer, struct network);
-    void (*update_gpu)    (struct layer, update_args);
+    
+    virtual void forward(struct network)  = 0;
+    virtual void backward(struct network)  = 0;
+    virtual void update(update_args) = 0;
+    virtual void resize(int, int) = 0;
+    
     int batch_normalize;
     int shortcut;
     int batch;
@@ -331,170 +407,9 @@ struct layer{
 
     size_t workspace_size;
 
-#ifdef GPU
-    int *indexes_gpu;
+  };
 
-    float *z_gpu;
-    float *r_gpu;
-    float *h_gpu;
-
-    float *temp_gpu;
-    float *temp2_gpu;
-    float *temp3_gpu;
-
-    float *dh_gpu;
-    float *hh_gpu;
-    float *prev_cell_gpu;
-    float *cell_gpu;
-    float *f_gpu;
-    float *i_gpu;
-    float *g_gpu;
-    float *o_gpu;
-    float *c_gpu;
-    float *dc_gpu; 
-
-    float *m_gpu;
-    float *v_gpu;
-    float *bias_m_gpu;
-    float *scale_m_gpu;
-    float *bias_v_gpu;
-    float *scale_v_gpu;
-
-    float * combine_gpu;
-    float * combine_delta_gpu;
-
-    float * prev_state_gpu;
-    float * forgot_state_gpu;
-    float * forgot_delta_gpu;
-    float * state_gpu;
-    float * state_delta_gpu;
-    float * gate_gpu;
-    float * gate_delta_gpu;
-    float * save_gpu;
-    float * save_delta_gpu;
-    float * concat_gpu;
-    float * concat_delta_gpu;
-
-    float * binary_input_gpu;
-    float * binary_weights_gpu;
-
-    float * mean_gpu;
-    float * variance_gpu;
-
-    float * rolling_mean_gpu;
-    float * rolling_variance_gpu;
-
-    float * variance_delta_gpu;
-    float * mean_delta_gpu;
-
-    float * x_gpu;
-    float * x_norm_gpu;
-    float * weights_gpu;
-    float * weight_updates_gpu;
-    float * weight_change_gpu;
-
-    float * biases_gpu;
-    float * bias_updates_gpu;
-    float * bias_change_gpu;
-
-    float * scales_gpu;
-    float * scale_updates_gpu;
-    float * scale_change_gpu;
-
-    float * output_gpu;
-    float * loss_gpu;
-    float * delta_gpu;
-    float * rand_gpu;
-    float * squared_gpu;
-    float * norms_gpu;
-#ifdef CUDNN
-    cudnnTensorDescriptor_t srcTensorDesc, dstTensorDesc;
-    cudnnTensorDescriptor_t dsrcTensorDesc, ddstTensorDesc;
-    cudnnTensorDescriptor_t normTensorDesc;
-    cudnnFilterDescriptor_t weightDesc;
-    cudnnFilterDescriptor_t dweightDesc;
-    cudnnConvolutionDescriptor_t convDesc;
-    cudnnConvolutionFwdAlgo_t fw_algo;
-    cudnnConvolutionBwdDataAlgo_t bd_algo;
-    cudnnConvolutionBwdFilterAlgo_t bf_algo;
-#endif
-#endif
-};
-
-void free_layer(layer);
-
-typedef enum {
-    CONSTANT, STEP, EXP, POLY, STEPS, SIG, RANDOM
-} learning_rate_policy;
-
-typedef struct network{
-    int n;
-    int batch;
-    size_t *seen;
-    int *t;
-    float epoch;
-    int subdivisions;
-    layer *layers;
-    float *output;
-    learning_rate_policy policy;
-
-    float learning_rate;
-    float momentum;
-    float decay;
-    float gamma;
-    float scale;
-    float power;
-    int time_steps;
-    int step;
-    int max_batches;
-    float *scales;
-    int   *steps;
-    int num_steps;
-    int burn_in;
-
-    int adam;
-    float B1;
-    float B2;
-    float eps;
-
-    int inputs;
-    int outputs;
-    int truths;
-    int notruth;
-    int h, w, c;
-    int max_crop;
-    int min_crop;
-    float max_ratio;
-    float min_ratio;
-    int center;
-    float angle;
-    float aspect;
-    float exposure;
-    float saturation;
-    float hue;
-    int random;
-
-    int gpu_index;
-    tree *hierarchy;
-
-    float *input;
-    float *truth;
-    float *delta;
-    float *workspace;
-    int train;
-    int index;
-    float *cost;
-    float clip;
-
-#ifdef GPU
-    float *input_gpu;
-    float *truth_gpu;
-    float *delta_gpu;
-    float *output_gpu;
-#endif
-
-} network;
-
+  
 typedef struct {
     int w;
     int h;
@@ -541,7 +456,24 @@ typedef struct{
 } data;
 
 typedef enum {
-    CLASSIFICATION_DATA, DETECTION_DATA, CAPTCHA_DATA, REGION_DATA, IMAGE_DATA, COMPARE_DATA, WRITING_DATA, SWAG_DATA, TAG_DATA, OLD_CLASSIFICATION_DATA, STUDY_DATA, DET_DATA, SUPER_DATA, LETTERBOX_DATA, REGRESSION_DATA, SEGMENTATION_DATA, INSTANCE_DATA, ISEG_DATA
+    CLASSIFICATION_DATA,
+    DETECTION_DATA,
+    CAPTCHA_DATA,
+    REGION_DATA,
+    IMAGE_DATA,
+    COMPARE_DATA,
+    WRITING_DATA,
+    SWAG_DATA,
+    TAG_DATA,
+    OLD_CLASSIFICATION_DATA,
+    STUDY_DATA,
+    DET_DATA,
+    SUPER_DATA,
+    LETTERBOX_DATA,
+    REGRESSION_DATA,
+    SEGMENTATION_DATA,
+    INSTANCE_DATA,
+    ISEG_DATA
 } data_type;
 
 typedef struct load_args{
@@ -665,15 +597,16 @@ float *network_accuracies(network *net, data d, int n);
 float train_network_datum(network *net);
 image make_random_image(int w, int h, int c);
 
-void denormalize_connected_layer(layer l);
-void denormalize_convolutional_layer(layer l);
-void statistics_connected_layer(layer l);
-void rescale_weights(layer l, float scale, float trans);
-void rgbgr_weights(layer l);
-image *get_weights(layer l);
+// void denormalize_connected_layer(layer *l);
+// void denormalize_convolutional_layer(layer *l);
+  
+void statistics_connected_layer(layer *l);
+void rescale_weights(layer *l, float scale, float trans);
+void rgbgr_weights(layer *l);
+image *get_weights(layer *l);
 
 void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const char *filename, char **names, int classes, int frame_skip, char *prefix, int avg, float hier_thresh, int w, int h, int fps, int fullscreen);
-void get_detection_detections(layer l, int w, int h, float thresh, detection *dets);
+void get_detection_detections(layer *l, int w, int h, float thresh, detection *dets);
 
 char *option_find_str(list *l, char *key, char *def);
 int option_find_int(list *l, char *key, int def);
@@ -685,9 +618,9 @@ void load_weights(network *net, char *filename);
 void save_weights_upto(network *net, char *filename, int cutoff);
 void load_weights_upto(network *net, char *filename, int start, int cutoff);
 
-void zero_objectness(layer l);
-void get_region_detections(layer l, int w, int h, int netw, int neth, float thresh, int *map, float tree_thresh, int relative, detection *dets);
-int get_yolo_detections(layer l, int w, int h, int netw, int neth, float thresh, int *map, int relative, detection *dets);
+void zero_objectness(layer *l);
+void get_region_detections(layer *l, int w, int h, int netw, int neth, float thresh, int *map, float tree_thresh, int relative, detection *dets);
+int get_yolo_detections(layer *l, int w, int h, int netw, int neth, float thresh, int *map, int relative, detection *dets);
 void free_network(network *net);
 void set_batch_network(network *net, int b);
 void set_temp_network(network *net, float t);
@@ -715,7 +648,8 @@ data load_data_old(char **paths, int n, int m, char **labels, int k, int w, int 
 size_t get_current_batch(network *net);
 void constrain_image(image im);
 image get_network_image_layer(network *net, int i);
-layer get_network_output_layer(network *net);
+layer* get_network_output_layer(network *net);
+  
 void top_predictions(network *net, int n, int *index);
 void flip_image(image a);
 image float_to_image(int w, int h, int c, float *data);

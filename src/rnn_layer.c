@@ -26,148 +26,146 @@ static void increment_layer(layer *l, int steps)
 #endif
 }
 
-layer make_rnn_layer(int batch, int inputs, int outputs, int steps, ACTIVATION activation, int batch_normalize, int adam)
-{
+rnn_layer* make_rnn_layer(int batch, int inputs, int outputs, int steps, ACTIVATION activation, int batch_normalize, int adam){
     fprintf(stderr, "RNN Layer: %d inputs, %d outputs\n", inputs, outputs);
     batch = batch / steps;
-    layer l = {0};
-    l.batch = batch;
-    l.type = RNN;
-    l.steps = steps;
-    l.inputs = inputs;
+    rnn_layer* l = new rnn_layer();
+    
+    l->batch = batch;
+    l->type = RNN;
+    l->steps = steps;
+    l->inputs = inputs;
 
-    l.state = calloc(batch*outputs, sizeof(float));
-    l.prev_state = calloc(batch*outputs, sizeof(float));
+    l->state = calloc(batch*outputs, sizeof(float));
+    l->prev_state = calloc(batch*outputs, sizeof(float));
 
-    l.input_layer = malloc(sizeof(layer));
+    l->input_layer = malloc(sizeof(layer));
     fprintf(stderr, "\t\t");
-    *(l.input_layer) = make_connected_layer(batch*steps, inputs, outputs, activation, batch_normalize, adam);
-    l.input_layer->batch = batch;
+    *(l->input_layer) = make_connected_layer(batch*steps, inputs, outputs, activation, batch_normalize, adam);
+    l->input_layer->batch = batch;
 
-    l.self_layer = malloc(sizeof(layer));
+    l->self_layer = malloc(sizeof(layer));
     fprintf(stderr, "\t\t");
-    *(l.self_layer) = make_connected_layer(batch*steps, outputs, outputs, activation, batch_normalize, adam);
-    l.self_layer->batch = batch;
+    *(l->self_layer) = make_connected_layer(batch*steps, outputs, outputs, activation, batch_normalize, adam);
+    l->self_layer->batch = batch;
 
-    l.output_layer = malloc(sizeof(layer));
+    l->output_layer = malloc(sizeof(layer));
     fprintf(stderr, "\t\t");
-    *(l.output_layer) = make_connected_layer(batch*steps, outputs, outputs, activation, batch_normalize, adam);
-    l.output_layer->batch = batch;
+    *(l->output_layer) = make_connected_layer(batch*steps, outputs, outputs, activation, batch_normalize, adam);
+    l->output_layer->batch = batch;
 
-    l.outputs = outputs;
-    l.output = l.output_layer->output;
-    l.delta = l.output_layer->delta;
+    l->outputs = outputs;
+    l->output = l->output_layer->output;
+    l->delta = l->output_layer->delta;
 
-    l.forward = forward_rnn_layer;
-    l.backward = backward_rnn_layer;
-    l.update = update_rnn_layer;
+    l->forward = forward_rnn_layer;
+    l->backward = backward_rnn_layer;
+    l->update = update_rnn_layer;
 #ifdef GPU
-    l.forward_gpu = forward_rnn_layer_gpu;
-    l.backward_gpu = backward_rnn_layer_gpu;
-    l.update_gpu = update_rnn_layer_gpu;
-    l.state_gpu = cuda_make_array(0, batch*outputs);
-    l.prev_state_gpu = cuda_make_array(0, batch*outputs);
-    l.output_gpu = l.output_layer->output_gpu;
-    l.delta_gpu = l.output_layer->delta_gpu;
+    l->forward_gpu = forward_rnn_layer_gpu;
+    l->backward_gpu = backward_rnn_layer_gpu;
+    l->update_gpu = update_rnn_layer_gpu;
+    l->state_gpu = cuda_make_array(0, batch*outputs);
+    l->prev_state_gpu = cuda_make_array(0, batch*outputs);
+    l->output_gpu = l->output_layer->output_gpu;
+    l->delta_gpu = l->output_layer->delta_gpu;
 #ifdef CUDNN
-    cudnnSetTensor4dDescriptor(l.input_layer->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, batch, l.input_layer->out_c, l.input_layer->out_h, l.input_layer->out_w); 
-    cudnnSetTensor4dDescriptor(l.self_layer->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, batch, l.self_layer->out_c, l.self_layer->out_h, l.self_layer->out_w); 
-    cudnnSetTensor4dDescriptor(l.output_layer->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, batch, l.output_layer->out_c, l.output_layer->out_h, l.output_layer->out_w); 
+    cudnnSetTensor4dDescriptor(l->input_layer->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, batch, l->input_layer->out_c, l->input_layer->out_h, l->input_layer->out_w); 
+    cudnnSetTensor4dDescriptor(l->self_layer->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, batch, l->self_layer->out_c, l->self_layer->out_h, l->self_layer->out_w); 
+    cudnnSetTensor4dDescriptor(l->output_layer->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, batch, l->output_layer->out_c, l->output_layer->out_h, l->output_layer->out_w); 
 #endif
 #endif
 
     return l;
 }
 
-void update_rnn_layer(layer l, update_args a)
-{
-    update_connected_layer(*(l.input_layer),  a);
-    update_connected_layer(*(l.self_layer),   a);
-    update_connected_layer(*(l.output_layer), a);
+void rnn_layer::update(update_args a){
+  update_connected_layer(*(this->input_layer),  a);
+  update_connected_layer(*(this->self_layer),   a);
+  update_connected_layer(*(this->output_layer), a);
 }
 
-void forward_rnn_layer(layer l, network net)
-{
+void rnn_layer::forward(network net){
     network s = net;
     s.train = net.train;
     int i;
-    layer input_layer = *(l.input_layer);
-    layer self_layer = *(l.self_layer);
-    layer output_layer = *(l.output_layer);
+    
+    layer input_layer = *(this->input_layer);
+    layer self_layer = *(this->self_layer);
+    layer output_layer = *(this->output_layer);
 
-    fill_cpu(l.outputs * l.batch * l.steps, 0, output_layer.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, 0, self_layer.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, 0, input_layer.delta, 1);
-    if(net.train) fill_cpu(l.outputs * l.batch, 0, l.state, 1);
+    fill_cpu(this->outputs * this->batch * this->steps, 0, output_layer.delta, 1);
+    fill_cpu(this->outputs * this->batch * this->steps, 0, self_layer.delta, 1);
+    fill_cpu(this->outputs * this->batch * this->steps, 0, input_layer.delta, 1);
+    if(net.train) fill_cpu(this->outputs * this->batch, 0, this->state, 1);
 
-    for (i = 0; i < l.steps; ++i) {
+    for (i = 0; i < this->steps; ++i) {
         s.input = net.input;
         forward_connected_layer(input_layer, s);
 
-        s.input = l.state;
+        s.input = this->state;
         forward_connected_layer(self_layer, s);
 
-        float *old_state = l.state;
-        if(net.train) l.state += l.outputs*l.batch;
-        if(l.shortcut){
-            copy_cpu(l.outputs * l.batch, old_state, 1, l.state, 1);
+        float *old_state = this->state;
+        if(net.train) this->state += this->outputs*this->batch;
+        if(this->shortcut){
+            copy_cpu(this->outputs * this->batch, old_state, 1, this->state, 1);
         }else{
-            fill_cpu(l.outputs * l.batch, 0, l.state, 1);
+            fill_cpu(this->outputs * this->batch, 0, this->state, 1);
         }
-        axpy_cpu(l.outputs * l.batch, 1, input_layer.output, 1, l.state, 1);
-        axpy_cpu(l.outputs * l.batch, 1, self_layer.output, 1, l.state, 1);
+        axpy_cpu(this->outputs * this->batch, 1, input_layer.output, 1, this->state, 1);
+        axpy_cpu(this->outputs * this->batch, 1, self_layer.output, 1, this->state, 1);
 
-        s.input = l.state;
+        s.input = this->state;
         forward_connected_layer(output_layer, s);
 
-        net.input += l.inputs*l.batch;
+        net.input += this->inputs*this->batch;
         increment_layer(&input_layer, 1);
         increment_layer(&self_layer, 1);
         increment_layer(&output_layer, 1);
     }
 }
 
-void backward_rnn_layer(layer l, network net)
-{
+void rnn_layer::backward(network net){
     network s = net;
     s.train = net.train;
     int i;
-    layer input_layer = *(l.input_layer);
-    layer self_layer = *(l.self_layer);
-    layer output_layer = *(l.output_layer);
+    layer input_layer = *(this->input_layer);
+    layer self_layer = *(this->self_layer);
+    layer output_layer = *(this->output_layer);
 
-    increment_layer(&input_layer, l.steps-1);
-    increment_layer(&self_layer, l.steps-1);
-    increment_layer(&output_layer, l.steps-1);
+    increment_layer(&input_layer, this->steps-1);
+    increment_layer(&self_layer, this->steps-1);
+    increment_layer(&output_layer, this->steps-1);
 
-    l.state += l.outputs*l.batch*l.steps;
-    for (i = l.steps-1; i >= 0; --i) {
-        copy_cpu(l.outputs * l.batch, input_layer.output, 1, l.state, 1);
-        axpy_cpu(l.outputs * l.batch, 1, self_layer.output, 1, l.state, 1);
+    this->state += this->outputs*this->batch*this->steps;
+    for (i = this->steps-1; i >= 0; --i) {
+        copy_cpu(this->outputs * this->batch, input_layer.output, 1, this->state, 1);
+        axpy_cpu(this->outputs * this->batch, 1, self_layer.output, 1, this->state, 1);
 
-        s.input = l.state;
+        s.input = this->state;
         s.delta = self_layer.delta;
         backward_connected_layer(output_layer, s);
 
-        l.state -= l.outputs*l.batch;
+        this->state -= this->outputs*this->batch;
         /*
            if(i > 0){
-           copy_cpu(l.outputs * l.batch, input_layer.output - l.outputs*l.batch, 1, l.state, 1);
-           axpy_cpu(l.outputs * l.batch, 1, self_layer.output - l.outputs*l.batch, 1, l.state, 1);
+           copy_cpu(this->outputs * this->batch, input_layer.output - this->outputs*this->batch, 1, this->state, 1);
+           axpy_cpu(this->outputs * this->batch, 1, self_layer.output - this->outputs*this->batch, 1, this->state, 1);
            }else{
-           fill_cpu(l.outputs * l.batch, 0, l.state, 1);
+           fill_cpu(this->outputs * this->batch, 0, this->state, 1);
            }
          */
 
-        s.input = l.state;
-        s.delta = self_layer.delta - l.outputs*l.batch;
+        s.input = this->state;
+        s.delta = self_layer.delta - this->outputs*this->batch;
         if (i == 0) s.delta = 0;
         backward_connected_layer(self_layer, s);
 
-        copy_cpu(l.outputs*l.batch, self_layer.delta, 1, input_layer.delta, 1);
-        if (i > 0 && l.shortcut) axpy_cpu(l.outputs*l.batch, 1, self_layer.delta, 1, self_layer.delta - l.outputs*l.batch, 1);
-        s.input = net.input + i*l.inputs*l.batch;
-        if(net.delta) s.delta = net.delta + i*l.inputs*l.batch;
+        copy_cpu(this->outputs*this->batch, self_layer.delta, 1, input_layer.delta, 1);
+        if (i > 0 && this->shortcut) axpy_cpu(this->outputs*this->batch, 1, self_layer.delta, 1, self_layer.delta - this->outputs*this->batch, 1);
+        s.input = net.input + i*this->inputs*this->batch;
+        if(net.delta) s.delta = net.delta + i*this->inputs*this->batch;
         else s.delta = 0;
         backward_connected_layer(input_layer, s);
 
