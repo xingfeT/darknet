@@ -117,17 +117,16 @@ void del_arg(int argc, char **argv, int index)
     argv[i] = 0;
 }
 
-int find_arg(int argc, char* argv[], char *arg)
-{
-    int i;
-    for(i = 0; i < argc; ++i) {
-        if(!argv[i]) continue;
-        if(0==strcmp(argv[i], arg)) {
-            del_arg(argc, argv, i);
-            return 1;
-        }
+int find_arg(int argc, char* argv[], const char *arg){
+  int i;
+  for(i = 0; i < argc; ++i) {
+    if(!argv[i]) continue;
+    if(0==strcmp(argv[i], arg)) {
+      del_arg(argc, argv, i);
+      return 1;
     }
-    return 0;
+  }
+  return 0;
 }
 
 int find_int_arg(int argc, char **argv, const char *arg, int def){

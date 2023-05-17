@@ -44,6 +44,7 @@ void average(int argc, char *argv[]){
                 int num = l->n*l->c*l->size*l->size;
                 axpy_cpu(l->n, 1, l->biases, 1, out->biases, 1);
                 axpy_cpu(num, 1, l->weights, 1, out->weights, 1);
+                
                 if(l->batch_normalize){
                     axpy_cpu(l->n, 1, l->scales, 1, out->scales, 1);
                     axpy_cpu(l->n, 1, l->rolling_mean, 1, out->rolling_mean, 1);

@@ -440,10 +440,35 @@ typedef struct detection{
     int sort_class;
 } detection;
 
-typedef struct matrix{
+  struct matrix{
     int rows, cols;
-    float **vals;
-} matrix;
+    float *vals;
+    float& operator()(int i, int j){
+      return vals[i*cols + j];
+    }
+
+    float operator()(int i, int j) const{
+      return vals[i*cols + j];
+    }
+
+    float* operator()(int i) {
+      return (vals + i*cols);
+    }
+    
+    matrix(int, int);
+    matrix(matrix const &m);
+    
+    ~matrix();
+    void scale(float scale);
+    void resize(int size);
+    matrix& operator+=(matrix const &from);
+    matrix():rows(0),cols(0),vals(nullptr){}
+    void to_csv();
+    void print() const;
+    static matrix from_csv(char *filename);
+    
+} ;
+  
 
 
 typedef struct{
@@ -643,7 +668,9 @@ int show_image(image p, const char *name, int ms);
 image copy_image(image p);
 void draw_box_width(image a, int x1, int y1, int x2, int y2, int w, float r, float g, float b);
 float get_current_rate(network *net);
-void composite_3d(char *f1, char *f2, char *out, int delta);
+
+  void composite_3d(char *f1, char *f2, const char *out, int delta);
+  
 data load_data_old(char **paths, int n, int m, char **labels, int k, int w, int h);
 size_t get_current_batch(network *net);
 void constrain_image(image im);
@@ -702,10 +729,11 @@ list *get_paths(char *filename);
 void hierarchy_predictions(float *predictions, int n, tree *hier, int only_leaves, int stride);
 void change_leaves(tree *t, char *leaf_list);
 
-int find_int_arg(int argc, char **argv, char *arg, int def);
+int find_int_arg(int argc, char **argv, const char *arg, int def);
 float find_float_arg(int argc, char **argv, char *arg, float def);
 int find_arg(int argc, char* argv[], char *arg);
 char *find_char_arg(int argc, char **argv, char *arg, char *def);
+  
 char *basecfg(char *cfgfile);
 void find_replace(char *str, char *orig, char *rep, char *output);
 void free_ptrs(void **ptrs, int n);

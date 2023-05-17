@@ -585,14 +585,14 @@ matrix network_predict_data_multi(network *net, data test, int n)
     for(i = 0; i < test.X.rows; i += net->batch){
         for(b = 0; b < net->batch; ++b){
             if(i+b == test.X.rows) break;
-            memcpy(X+b*test.X.cols, test.X.vals[i+b], test.X.cols*sizeof(float));
+            //memcpy(X+b*test.X.cols, test.X.vals[i+b], test.X.cols*sizeof(float));
         }
         for(m = 0; m < n; ++m){
             float *out = network_predict(net, X);
             for(b = 0; b < net->batch; ++b){
                 if(i+b == test.X.rows) break;
                 for(j = 0; j < k; ++j){
-                    pred.vals[i+b][j] += out[j+b*k]/n;
+                  //pred.vals[i+b][j] += out[j+b*k]/n;
                 }
             }
         }
@@ -610,13 +610,13 @@ matrix network_predict_data(network *net, data test)
     for(i = 0; i < test.X.rows; i += net->batch){
         for(b = 0; b < net->batch; ++b){
             if(i+b == test.X.rows) break;
-            memcpy(X+b*test.X.cols, test.X.vals[i+b], test.X.cols*sizeof(float));
+            //memcpy(X+b*test.X.cols, test.X.vals[i+b], test.X.cols*sizeof(float));
         }
         float *out = network_predict(net, X);
         for(b = 0; b < net->batch; ++b){
             if(i+b == test.X.rows) break;
             for(j = 0; j < k; ++j){
-                pred.vals[i+b][j] = out[j+b*k];
+              //pred.vals[i+b][j] = out[j+b*k];
             }
         }
     }
@@ -641,28 +641,29 @@ void print_network(network *net)
     }
 }
 
-void compare_networks(network *n1, network *n2, data test)
-{
+void compare_networks(network *n1, network *n2, data test){
     matrix g1 = network_predict_data(n1, test);
     matrix g2 = network_predict_data(n2, test);
     int i;
     int a,b,c,d;
     a = b = c = d = 0;
     for(i = 0; i < g1.rows; ++i){
-        int truth = max_index(test.y.vals[i], test.y.cols);
-        int p1 = max_index(g1.vals[i], g1.cols);
-        int p2 = max_index(g2.vals[i], g2.cols);
-        if(p1 == truth){
-            if(p2 == truth) ++d;
-            else ++c;
-        }else{
-            if(p2 == truth) ++b;
-            else ++a;
-        }
+      int truth = 0;//max_index(test.y.vals[i], test.y.cols);
+      int p1 = 0;//max_index(g1.vals[i], g1.cols);
+      int p2 = 0;//max_index(g2.vals[i], g2.cols);
+      
+      if(p1 == truth){
+        if(p2 == truth) ++d;
+        else ++c;
+      }else{
+        if(p2 == truth) ++b;
+        else ++a;
+      }
     }
     printf("%5d %5d\n%5d %5d\n", a, b, c, d);
-    float num = pow((abs(b - c) - 1.), 2.);
+    float num = pow((abs(b - c) - 1.0), 2.0);
     float den = b + c;
+    
     printf("%f\n", num/den); 
 }
 
