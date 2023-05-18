@@ -5,16 +5,14 @@
 #include "layer.h"
 #include "network.h"
 
-layer* make_region_layer(int batch, int w, int h, int n, int classes, int coords);
+
 struct region_layer :public layer{
-  void forward(network net) const ;
-  void backward(network net) const;
+  void forward(network net) ;
+  void backward(network net);
   void resize(int w, int h);
 };
 
-#ifdef GPU
-void forward_region_layer_gpu(const layer l, network net);
-void backward_region_layer_gpu(layer l, network net);
-#endif
+region_layer* make_region_layer(int batch, int w, int h, int n, int classes, int coords);
+
 
 #endif

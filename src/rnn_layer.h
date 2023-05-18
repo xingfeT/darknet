@@ -12,6 +12,8 @@ struct rnn_layer :public layer{
   void forward(network net);
   void backward(network net);
   void update(update_args a);
+  void increment_layer(int steps);
+  
 };
 
 rnn_layer* make_rnn_layer(int batch, int inputs, int outputs, int steps, ACTIVATION activation,

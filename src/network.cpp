@@ -576,11 +576,10 @@ float *network_predict_image(network *net, image im)
 int network_width(network *net){return net->w;}
 int network_height(network *net){return net->h;}
 
-matrix network_predict_data_multi(network *net, data test, int n)
-{
+matrix network_predict_data_multi(network *net, data test, int n){
     int i,j,b,m;
     int k = net->outputs;
-    matrix pred = make_matrix(test.X.rows, k);
+    matrix pred = matrix(test.X.rows, k);
     float *X = (float*)calloc(net->batch*test.X.rows, sizeof(float));
     for(i = 0; i < test.X.rows; i += net->batch){
         for(b = 0; b < net->batch; ++b){
@@ -601,11 +600,10 @@ matrix network_predict_data_multi(network *net, data test, int n)
     return pred;   
 }
 
-matrix network_predict_data(network *net, data test)
-{
+matrix network_predict_data(network *net, data test){
     int i,j,b;
     int k = net->outputs;
-    matrix pred = make_matrix(test.X.rows, k);
+    matrix pred = matrix(test.X.rows, k);
     float *X = (float*)calloc(net->batch*test.X.cols, sizeof(float));
     for(i = 0; i < test.X.rows; i += net->batch){
         for(b = 0; b < net->batch; ++b){
@@ -667,37 +665,32 @@ void compare_networks(network *n1, network *n2, data test){
     printf("%f\n", num/den); 
 }
 
-float network_accuracy(network *net, data d)
-{
-    matrix guess = network_predict_data(net, d);
-    float acc = matrix_topk_accuracy(d.y, guess,1);
-    free_matrix(guess);
-    return acc;
+float network_accuracy(network *net, data d){
+  matrix guess = network_predict_data(net, d);
+  float acc = matrix_topk_accuracy(d.y, guess,1);
+  return acc;
 }
 
-float *network_accuracies(network *net, data d, int n)
-{
-    static float acc[2];
-    matrix guess = network_predict_data(net, d);
-    acc[0] = matrix_topk_accuracy(d.y, guess, 1);
-    acc[1] = matrix_topk_accuracy(d.y, guess, n);
-    free_matrix(guess);
-    return acc;
+float *network_accuracies(network *net, data d, int n){
+  static float acc[2];
+  matrix guess = network_predict_data(net, d);
+  acc[0] = matrix_topk_accuracy(d.y, guess, 1);
+  acc[1] = matrix_topk_accuracy(d.y, guess, n);
+  return acc;
 }
 
 layer* get_network_output_layer(network *net){
-    int i;
-    for(i = net->n - 1; i >= 0; --i){
-      if(net->layers[i]->type != COST) break;
-    }
-    return net->layers[i];
+  int i;
+  for(i = net->n - 1; i >= 0; --i){
+    if(net->layers[i]->type != COST) break;
+  }
+  return net->layers[i];
 }
 
 float network_accuracy_multi(network *net, data d, int n){
-    matrix guess = network_predict_data_multi(net, d, n);
-    float acc = matrix_topk_accuracy(d.y, guess,1);
-    free_matrix(guess);
-    return acc;
+  matrix guess = network_predict_data_multi(net, d, n);
+  float acc = matrix_topk_accuracy(d.y, guess,1);
+  return acc;
 }
 
 void free_network(network *net){
@@ -706,6 +699,7 @@ void free_network(network *net){
       delete net->layers[i];
     }
     free(net->layers);
+    
     if(net->input) free(net->input);
     if(net->truth) free(net->truth);
 #ifdef GPU

@@ -25,33 +25,25 @@ yolo_layer* make_yolo_layer(int batch, int w, int h, int n, int total, int *mask
     l->out_h = l->h;
     l->out_c = l->c;
     l->classes = classes;
-    l->cost = calloc(1, sizeof(float));
-    l->biases = calloc(total*2, sizeof(float));
+    l->cost = (float*)calloc(1, sizeof(float));
+    l->biases = (float*)calloc(total*2, sizeof(float));
+    
     if(mask) l->mask = mask;
     else{
-        l->mask = calloc(n, sizeof(int));
+        l->mask = (int*)calloc(n, sizeof(int));
         for(i = 0; i < n; ++i){
             l->mask[i] = i;
         }
     }
-    l->bias_updates = calloc(n*2, sizeof(float));
+    l->bias_updates = (float*)calloc(n*2, sizeof(float));
     l->outputs = h*w*n*(classes + 4 + 1);
     l->inputs = l->outputs;
     l->truths = 90*(4 + 1);
-    l->delta = calloc(batch*l->outputs, sizeof(float));
-    l->output = calloc(batch*l->outputs, sizeof(float));
+    l->delta = (float*)calloc(batch*l->outputs, sizeof(float));
+    l->output = (float*)calloc(batch*l->outputs, sizeof(float));
     for(i = 0; i < total*2; ++i){
         l->biases[i] = .5;
     }
-
-    l->forward = forward_yolo_layer;
-    l->backward = backward_yolo_layer;
-#ifdef GPU
-    l->forward_gpu = forward_yolo_layer_gpu;
-    l->backward_gpu = backward_yolo_layer_gpu;
-    l->output_gpu = cuda_make_array(l->output, batch*l->outputs);
-    l->delta_gpu = cuda_make_array(l->delta, batch*l->outputs);
-#endif
 
     fprintf(stderr, "yolo\n");
     srand(0);
@@ -59,27 +51,21 @@ yolo_layer* make_yolo_layer(int batch, int w, int h, int n, int total, int *mask
     return l;
 }
 
-void layer::resize(int w, int h){
-    l->w = w;
-    l->h = h;
+void yolo_layer::resize(int w, int h){
+  yolo_layer* l = this;
+  
+  l->w = w;
+  l->h = h;
 
-    l->outputs = h*w*l->n*(l->classes + 4 + 1);
-    l->inputs = l->outputs;
+  l->outputs = h*w*l->n*(l->classes + 4 + 1);
+  l->inputs = l->outputs;
 
-    l->output = realloc(l->output, l->batch*l->outputs*sizeof(float));
-    l->delta = realloc(l->delta, l->batch*l->outputs*sizeof(float));
-
-#ifdef GPU
-    cuda_free(l->delta_gpu);
-    cuda_free(l->output_gpu);
-
-    l->delta_gpu =     cuda_make_array(l->delta, l->batch*l->outputs);
-    l->output_gpu =    cuda_make_array(l->output, l->batch*l->outputs);
-#endif
+  l->output = (float*)realloc(l->output, l->batch*l->outputs*sizeof(float));
+  l->delta = (float*)realloc(l->delta, l->batch*l->outputs*sizeof(float));
 }
 
-box get_yolo_box(float *x, float *biases, int n, int index, int i, int j, int lw, int lh, int w, int h, int stride)
-{
+box get_yolo_box(float *x, float *biases, int n, int index, int i, int j,
+                 int lw, int lh, int w, int h, int stride){
     box b;
     b.x = (i + x[index + 0*stride]) / lw;
     b.y = (j + x[index + 1*stride]) / lh;
@@ -88,8 +74,8 @@ box get_yolo_box(float *x, float *biases, int n, int index, int i, int j, int lw
     return b;
 }
 
-float delta_yolo_box(box truth, float *x, float *biases, int n, int index, int i, int j, int lw, int lh, int w, int h, float *delta, float scale, int stride)
-{
+float delta_yolo_box(box truth, float *x, float *biases, int n, int index,
+                     int i, int j, int lw, int lh, int w, int h, float *delta, float scale, int stride){
     box pred = get_yolo_box(x, biases, n, index, i, j, lw, lh, w, h, stride);
     float iou = box_iou(pred, truth);
 
@@ -106,29 +92,30 @@ float delta_yolo_box(box truth, float *x, float *biases, int n, int index, int i
 }
 
 
-void delta_yolo_class(float *output, float *delta, int index, int class, int classes, int stride, float *avg_cat)
-{
+void delta_yolo_class(float *output, float *delta, int index, int cl,
+                      int classes, int stride, float *avg_cat){
     int n;
     if (delta[index]){
-        delta[index + stride*class] = 1 - output[index + stride*class];
-        if(avg_cat) *avg_cat += output[index + stride*class];
+        delta[index + stride*cl] = 1 - output[index + stride*cl];
+        if(avg_cat) *avg_cat += output[index + stride*cl];
         return;
     }
     for(n = 0; n < classes; ++n){
-        delta[index + stride*n] = ((n == class)?1 : 0) - output[index + stride*n];
-        if(n == class && avg_cat) *avg_cat += output[index + stride*n];
+        delta[index + stride*n] = ((n == cl)?1 : 0) - output[index + stride*n];
+        if(n == cl && avg_cat) *avg_cat += output[index + stride*n];
     }
 }
 
-static int entry_index(layer l, int batch, int location, int entry)
-{
+static int entry_index(layer* l, int batch, int location, int entry){
     int n =   location / (l->w*l->h);
     int loc = location % (l->w*l->h);
+    
     return batch*l->outputs + n*l->w*l->h*(4+l->classes+1) + entry*l->w*l->h + loc;
 }
 
-void forward_yolo_layer(const layer l, network net)
-{
+void yolo_layer::forward(network net){
+  yolo_layer* l = this;
+  
     int i,j,b,t,n;
     memcpy(l->output, net.input, l->outputs*l->batch*sizeof(float));
 
@@ -180,10 +167,10 @@ void forward_yolo_layer(const layer l, network net)
                     if (best_iou > l->truth_thresh) {
                         l->delta[obj_index] = 1 - l->output[obj_index];
 
-                        int class = net.truth[best_t*(4 + 1) + b*l->truths + 4];
-                        if (l->map) class = l->map[class];
+                        int cl = net.truth[best_t*(4 + 1) + b*l->truths + 4];
+                        if (l->map) cl = l->map[cl];
                         int class_index = entry_index(l, b, n*l->w*l->h + j*l->w + i, 4 + 1);
-                        delta_yolo_class(l->output, l->delta, class_index, class, l->classes, l->w*l->h, 0);
+                        delta_yolo_class(l->output, l->delta, class_index, cl, l->classes, l->w*l->h, 0);
                         box truth = float_to_box(net.truth + best_t*(4 + 1) + b*l->truths, 1);
                         delta_yolo_box(truth, l->output, l->biases, l->mask[n], box_index, i, j, l->w, l->h, net.w, net.h, l->delta, (2-truth.w*truth.h), l->w*l->h);
                     }
@@ -220,10 +207,10 @@ void forward_yolo_layer(const layer l, network net)
                 avg_obj += l->output[obj_index];
                 l->delta[obj_index] = 1 - l->output[obj_index];
 
-                int class = net.truth[t*(4 + 1) + b*l->truths + 4];
-                if (l->map) class = l->map[class];
+                int cl = net.truth[t*(4 + 1) + b*l->truths + 4];
+                if (l->map) cl = l->map[cl];
                 int class_index = entry_index(l, b, mask_n*l->w*l->h + j*l->w + i, 4 + 1);
-                delta_yolo_class(l->output, l->delta, class_index, class, l->classes, l->w*l->h, &avg_cat);
+                delta_yolo_class(l->output, l->delta, class_index, cl, l->classes, l->w*l->h, &avg_cat);
 
                 ++count;
                 ++class_count;
@@ -269,8 +256,8 @@ void correct_yolo_boxes(detection *dets, int n, int w, int h, int netw, int neth
     }
 }
 
-int yolo_layer::yolo_num_detections(float thresh){
-  layer* l = this;
+int yolo_layer::yolo_num_detections(float thresh) {
+  yolo_layer* l = this;
     int i, n;
     int count = 0;
     for (i = 0; i < l->w*l->h; ++i){
@@ -285,7 +272,7 @@ int yolo_layer::yolo_num_detections(float thresh){
 }
 
 void yolo_layer::avg_flipped_yolo(){
-  layer* l = this;
+  yolo_layer* l = this;
     int i,j,n,z;
     float *flip = l->output + l->outputs;
     for (j = 0; j < l->h; ++j) {
@@ -310,11 +297,11 @@ void yolo_layer::avg_flipped_yolo(){
     }
 }
 
-int get_yolo_detections(layer l, int w, int h, int netw, int neth, float thresh, int *map, int relative, detection *dets)
-{
+int get_yolo_detections(yolo_layer* l, int w, int h, int netw, int neth, float thresh,
+                        int *map, int relative, detection *dets){
     int i,j,n;
     float *predictions = l->output;
-    if (l->batch == 2) avg_flipped_yolo(l);
+    if (l->batch == 2) l->avg_flipped_yolo();
     int count = 0;
     for (i = 0; i < l->w*l->h; ++i){
         int row = i / l->w;
@@ -338,34 +325,4 @@ int get_yolo_detections(layer l, int w, int h, int netw, int neth, float thresh,
     correct_yolo_boxes(dets, count, w, h, netw, neth, relative);
     return count;
 }
-
-#ifdef GPU
-
-void forward_yolo_layer_gpu(const layer l, network net)
-{
-    copy_gpu(l->batch*l->inputs, net.input_gpu, 1, l->output_gpu, 1);
-    int b, n;
-    for (b = 0; b < l->batch; ++b){
-        for(n = 0; n < l->n; ++n){
-            int index = entry_index(l, b, n*l->w*l->h, 0);
-            activate_array_gpu(l->output_gpu + index, 2*l->w*l->h, LOGISTIC);
-            index = entry_index(l, b, n*l->w*l->h, 4);
-            activate_array_gpu(l->output_gpu + index, (1+l->classes)*l->w*l->h, LOGISTIC);
-        }
-    }
-    if(!net.train || l->onlyforward){
-        cuda_pull_array(l->output_gpu, l->output, l->batch*l->outputs);
-        return;
-    }
-
-    cuda_pull_array(l->output_gpu, net.input, l->batch*l->inputs);
-    forward_yolo_layer(l, net);
-    cuda_push_array(l->delta_gpu, l->delta, l->batch*l->outputs);
-}
-
-void backward_yolo_layer_gpu(const layer l, network net)
-{
-    axpy_gpu(l->batch*l->inputs, 1, l->delta_gpu, 1, net.delta_gpu, 1);
-}
-#endif
 

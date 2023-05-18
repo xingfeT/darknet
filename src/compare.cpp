@@ -7,8 +7,7 @@
 #include "parser.h"
 #include "box.h"
 
-void train_compare(char *cfgfile, char *weightfile)
-{
+void train_compare(char *cfgfile, char *weightfile){
     srand(time(0));
     float avg_loss = -1;
     char *base = basecfg(cfgfile);

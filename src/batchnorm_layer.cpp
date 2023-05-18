@@ -3,15 +3,16 @@
 #include "blas.h"
 #include <stdio.h>
 
-layer make_batchnorm_layer(int batch, int w, int h, int c)
-{
+layer* make_batchnorm_layer(int batch, int w, int h, int c){
     fprintf(stderr, "Batch Normalization Layer: %d x %d x %d image\n", w,h,c);
-    layer l = {0};
+    batchnorm_layer* l = new batchnorm_layer();
+    
     l.type = BATCHNORM;
     l.batch = batch;
     l.h = l.out_h = h;
     l.w = l.out_w = w;
     l.c = l.out_c = c;
+    
     l.output = calloc(h * w * c * batch, sizeof(float));
     l.delta  = calloc(h * w * c * batch, sizeof(float));
     l.inputs = w*h*c;
@@ -34,38 +35,6 @@ layer make_batchnorm_layer(int batch, int w, int h, int c)
 
     l.forward = forward_batchnorm_layer;
     l.backward = backward_batchnorm_layer;
-#ifdef GPU
-    l.forward_gpu = forward_batchnorm_layer_gpu;
-    l.backward_gpu = backward_batchnorm_layer_gpu;
-
-    l.output_gpu =  cuda_make_array(l.output, h * w * c * batch);
-    l.delta_gpu =   cuda_make_array(l.delta, h * w * c * batch);
-
-    l.biases_gpu = cuda_make_array(l.biases, c);
-    l.bias_updates_gpu = cuda_make_array(l.bias_updates, c);
-
-    l.scales_gpu = cuda_make_array(l.scales, c);
-    l.scale_updates_gpu = cuda_make_array(l.scale_updates, c);
-
-    l.mean_gpu = cuda_make_array(l.mean, c);
-    l.variance_gpu = cuda_make_array(l.variance, c);
-
-    l.rolling_mean_gpu = cuda_make_array(l.mean, c);
-    l.rolling_variance_gpu = cuda_make_array(l.variance, c);
-
-    l.mean_delta_gpu = cuda_make_array(l.mean, c);
-    l.variance_delta_gpu = cuda_make_array(l.variance, c);
-
-    l.x_gpu = cuda_make_array(l.output, l.batch*l.outputs);
-    l.x_norm_gpu = cuda_make_array(l.output, l.batch*l.outputs);
-    #ifdef CUDNN
-    cudnnCreateTensorDescriptor(&l.normTensorDesc);
-    cudnnCreateTensorDescriptor(&l.dstTensorDesc);
-    cudnnSetTensor4dDescriptor(l.dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l.batch, l.out_c, l.out_h, l.out_w); 
-    cudnnSetTensor4dDescriptor(l.normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, l.out_c, 1, 1); 
-
-    #endif
-#endif
     return l;
 }
 

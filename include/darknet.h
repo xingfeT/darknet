@@ -197,8 +197,16 @@ typedef struct network{
     
     virtual void forward(struct network)  = 0;
     virtual void backward(struct network)  = 0;
-    virtual void update(update_args) = 0;
-    virtual void resize(int, int) = 0;
+     virtual void update(update_args) {
+       
+}
+     
+     virtual void increment_layer(int steps){
+       
+     }
+     virtual void resize(int, int) {
+       
+     }
     
     int batch_normalize;
     int shortcut;
@@ -778,6 +786,9 @@ size_t rand_size_t();
 float rand_normal();
 float rand_uniform(float min, float max);
 
+  void init_adam(layer* l);
+void init_batch_normalize(layer* l);
+  
 #ifdef __cplusplus
 }
 #endif

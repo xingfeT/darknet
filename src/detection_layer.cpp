@@ -11,35 +11,30 @@
 #include <string.h>
 #include <stdlib.h>
 
-detection_layer make_detection_layer(int batch, int inputs, int n, int side, int classes, int coords, int rescore)
-{
-    detection_layer l = {0};
-    l.type = DETECTION;
+detection_layer* make_detection_layer(int batch,
+                                      int inputs, int n, int side, int classes, int coords,
+                                      int rescore){
+  detection_layer* l = new detection_layer();
+    l->type = DETECTION;
 
-    l.n = n;
-    l.batch = batch;
-    l.inputs = inputs;
-    l.classes = classes;
-    l.coords = coords;
-    l.rescore = rescore;
-    l.side = side;
-    l.w = side;
-    l.h = side;
-    assert(side*side*((1 + l.coords)*l.n + l.classes) == inputs);
-    l.cost = calloc(1, sizeof(float));
-    l.outputs = l.inputs;
-    l.truths = l.side*l.side*(1+l.coords+l.classes);
-    l.output = calloc(batch*l.outputs, sizeof(float));
-    l.delta = calloc(batch*l.outputs, sizeof(float));
+    l->n = n;
+    l->batch = batch;
+    l->inputs = inputs;
+    l->classes = classes;
+    l->coords = coords;
+    l->rescore = rescore;
+    l->side = side;
+    l->w = side;
+    l->h = side;
+    assert(side*side*((1 + l->coords)*l->n + l->classes) == inputs);
+    
+    l->cost = (float*)calloc(1, sizeof(float));
+    l->outputs = l->inputs;
+    l->truths = l->side*l->side*(1+l->coords+l->classes);
 
-    l.forward = forward_detection_layer;
-    l.backward = backward_detection_layer;
-#ifdef GPU
-    l.forward_gpu = forward_detection_layer_gpu;
-    l.backward_gpu = backward_detection_layer_gpu;
-    l.output_gpu = cuda_make_array(l.output, batch*l.outputs);
-    l.delta_gpu = cuda_make_array(l.delta, batch*l.outputs);
-#endif
+    l->output = (float*)calloc(batch*l->outputs, sizeof(float));
+    l->delta = (float*)calloc(batch*l->outputs, sizeof(float));
+
 
     fprintf(stderr, "Detection Layer\n");
     srand(0);
@@ -47,8 +42,9 @@ detection_layer make_detection_layer(int batch, int inputs, int n, int side, int
     return l;
 }
 
-void forward_detection_layer(const detection_layer l, network net)
-{
+void detection_layer::forward(network net){
+  detection_layer* l = this;
+  
     int locations = l.side*l.side;
     int i,j;
     memcpy(l.output, net.input, l.outputs*l.batch*sizeof(float));

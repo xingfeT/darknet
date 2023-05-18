@@ -25,12 +25,13 @@ void cudnn_convolutional_setup(layer *l);
 #endif
 #endif
 
-struct ConvolutionalLayer :public layer{
+struct convolutional_layer :public layer{
   void resize(int w, int h);
 
   void forward(network net);
   void update(update_args a);
   void backward(network net);
+
   image *visualize(char *window, image *prev_weights);
   void swap_binary();
   image get_image();
@@ -39,12 +40,22 @@ struct ConvolutionalLayer :public layer{
 
   int out_height();
   int out_width();
+  size_t workspaceSize();
+  void denormalize();
+
+  void rgbgr_weights();
+  void rescale_weights(float scale, float trans);
+  image *get_weights();
+  
+  layer* batch_normalize_layer;
+  layer* batchnorm_layer;
+  
 };
 
-typedef ConvolutionalLayer convolutional_layer;
 
 
-ConvolutionalLayer* make_convolutional_layer(int batch, int h, int w, int c, int n,
+
+convolutional_layer* make_convolutional_layer(int batch, int h, int w, int c, int n,
                                               int groups, int size, int stride,
                                               int padding, ACTIVATION activation,
                                               int batch_normalize, int binary, int xnor, int adam);

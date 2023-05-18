@@ -5,11 +5,14 @@
 #include "layer.h"
 #include "network.h"
 
-layer* make_iseg_layer(int batch, int w, int h, int classes, int ids);
+
 struct iseg_layer :public layer{
   void forward(network net);
   void backward(network net);
+  void resize(int w, int h);
+
 };
+iseg_layer* make_iseg_layer(int batch, int w, int h, int classes, int ids);
 
 
 void resize_iseg_layer(layer *l, int w, int h);

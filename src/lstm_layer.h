@@ -8,8 +8,10 @@
 
 
 struct lstm_layer:public layer{
-  void forward(network net) const ; 
+  void forward(network net) ;
+  void backward(network net);
   void update(update_args a);
+  void increment_layer(int steps);
 };
 
 lstm_layer* make_lstm_layer(int batch,
