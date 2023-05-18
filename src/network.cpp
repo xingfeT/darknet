@@ -34,7 +34,7 @@
 
 load_args get_base_args(network *net)
 {
-    load_args args = {0};
+    load_args args;
     args.w = net->w;
     args.h = net->h;
     args.size = net->w;

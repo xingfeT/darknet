@@ -4,9 +4,12 @@
 #include "option_list.h"
 #include "utils.h"
 
-list *read_data_cfg(char *filename){
+list *read_data_cfg(const char *filename){
     FILE *file = fopen(filename, "r");
-    if(file == 0) file_error(filename);
+    if(file == 0) {
+      file_error(filename);
+    }
+
     char *line;
     int nu = 0;
     list *options = make_list();
@@ -20,13 +23,14 @@ list *read_data_cfg(char *filename){
                 free(line);
                 break;
             default:
-                if(!read_option(line, options)){
-                    fprintf(stderr, "Config file error line %d, could parse: %s\n", nu, line);
-                    free(line);
-                }
-                break;
+              if(!read_option(line, options)){
+                fprintf(stderr, "Config file error line %d, could parse: %s\n", nu, line);
+                free(line);
+              }
+              break;
         }
     }
+
     fclose(file);
     return options;
 }

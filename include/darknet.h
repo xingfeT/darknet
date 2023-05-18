@@ -139,7 +139,9 @@ typedef struct network{
     float power;
     int time_steps;
     int step;
-    int max_batches;
+  
+  size_t max_batches;
+  
     float *scales;
     int   *steps;
     int num_steps;
@@ -501,38 +503,48 @@ typedef enum {
     ISEG_DATA
 } data_type;
 
-typedef struct load_args{
+  struct load_args{
+  load_args(){
+  };
+    
     int threads;
-    char **paths;
-    char *path;
     int n;
     int m;
-    char **labels;
     int h;
     int w;
+    
     int out_w;
     int out_h;
     int nh;
     int nw;
     int num_boxes;
-    int min, max, size;
+    int min;
+    int max;
+    int size;
+    
     int classes;
     int background;
     int scale;
     int center;
     int coords;
+    
     float jitter;
     float angle;
     float aspect;
     float saturation;
     float exposure;
     float hue;
-    data *d;
-    image *im;
-    image *resized;
     data_type type;
-    tree *hierarchy;
-} load_args;
+
+    
+    char **paths  = nullptr;
+    char *path= nullptr;
+    char **labels= nullptr;
+    data *d= nullptr;
+    image *im= nullptr;
+    image *resized= nullptr;
+    tree *hierarchy= nullptr;
+};
 
 typedef struct{
     int id;
@@ -559,8 +571,9 @@ typedef struct list{
 } list;
 
 pthread_t load_data(load_args args);
-list *read_data_cfg(char *filename);
-list *read_cfg(char *filename);
+list *read_data_cfg(const char *filename);
+list *read_cfg(const char *filename);
+  
 unsigned char *read_file(char *filename);
 data resize_data(data orig, int w, int h);
 data *tile_data(data orig, int divs, int size);
@@ -725,17 +738,21 @@ void free_image(image m);
 float train_network(network *net, data d);
 pthread_t load_data_in_thread(load_args args);
 void load_data_blocking(load_args args);
-list *get_paths(char *filename);
+
+  list *get_paths(const char *filename);
+  
 void hierarchy_predictions(float *predictions, int n, tree *hier, int only_leaves, int stride);
 void change_leaves(tree *t, char *leaf_list);
 
 int find_int_arg(int argc, char **argv, const char *arg, int def);
-float find_float_arg(int argc, char **argv, char *arg, float def);
-int find_arg(int argc, char* argv[], char *arg);
-char *find_char_arg(int argc, char **argv, char *arg, char *def);
+float find_float_arg(int argc, char **argv, const char *arg, float def);
+int find_arg(int argc, char* argv[], const char *arg);
+ 
+char *find_char_arg(int argc, char **argv, const char *arg, char *def);
   
 char *basecfg(char *cfgfile);
-void find_replace(char *str, char *orig, char *rep, char *output);
+void find_replace(char *str, const char *orig, const char *rep,
+                  char *output);
 void free_ptrs(void **ptrs, int n);
 char *fgetl(FILE *fp);
 void strip(char *s);

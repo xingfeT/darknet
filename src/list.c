@@ -2,38 +2,20 @@
 #include <string.h>
 #include "list.h"
 
-list *make_list()
-{
-	list *l = malloc(sizeof(list));
-	l->size = 0;
-	l->front = 0;
-	l->back = 0;
-	return l;
+list *make_list(){
+  list *l = (list *)calloc(sizeof(list));
+  return l;
 }
 
-/*
-void transfer_node(list *s, list *d, node *n)
-{
-    node *prev, *next;
-    prev = n->prev;
-    next = n->next;
-    if(prev) prev->next = next;
-    if(next) next->prev = prev;
-    --s->size;
-    if(s->front == n) s->front = next;
-    if(s->back == n) s->back = prev;
-}
-*/
 
 void *list_pop(list *l){
-    if(!l->back) return 0;
+    if(!l->back) return nullptr;
     node *b = l->back;
     void *val = b->val;
     l->back = b->prev;
     if(l->back) l->back->next = 0;
     free(b);
     --l->size;
-    
     return val;
 }
 

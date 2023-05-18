@@ -60,8 +60,7 @@ network *load_network(char *cfg, char *weights, int clear)
     return net;
 }
 
-size_t get_current_batch(network *net)
-{
+size_t get_current_batch(network *net){
     size_t batch_num = (*net->seen)/(net->batch*net->subdivisions);
     return batch_num;
 }

@@ -9,8 +9,7 @@
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-list *get_paths(char *filename)
-{
+list *get_paths(const char *filename){
     char *path;
     FILE *file = fopen(filename, "r");
     if(!file) file_error(filename);
@@ -615,7 +614,7 @@ matrix load_regression_labels_paths(char **paths, int n, int k){
 }
 
 matrix load_labels_paths(char **paths, int n, char **labels, int k, tree *hierarchy){
-    matrix y = make_matrix(n, k);
+    matrix y = matrix(n, k);
     int i;
     for(i = 0; i < n && labels; ++i){
       fill_truth(paths[i], labels, k, y(i));
@@ -626,9 +625,8 @@ matrix load_labels_paths(char **paths, int n, char **labels, int k, tree *hierar
     return y;
 }
 
-matrix load_tags_paths(char **paths, int n, int k)
-{
-    matrix y = make_matrix(n, k);
+matrix load_tags_paths(char **paths, int n, int k){
+    matrix y = matrix(n, k);
     int i;
     //int count = 0;
     for(int i = 0; i < n; ++i){
@@ -650,50 +648,47 @@ matrix load_tags_paths(char **paths, int n, int k)
     return y;
 }
 
-char **get_labels(char *filename)
-{
+char **get_labels(char *filename){
     list *plist = get_paths(filename);
     char **labels = (char **)list_to_array(plist);
     free_list(plist);
     return labels;
 }
 
-void free_data(data d)
-{
-    if(!d.shallow){
-        free_matrix(d.X);
-        free_matrix(d.y);
-    }else{
-        free(d.X.vals);
-        free(d.y.vals);
-    }
+void free_data(data d){
+  if(!d.shallow){
+    //free_matrix(d.X);
+    //free_matrix(d.y);
+  }else{
+    //free(d.X.vals);
+    //free(d.y.vals);
+  }
 }
 
-image get_segmentation_image(char *path, int w, int h, int classes)
-{
-    char labelpath[4096];
-    find_replace(path, "images", "mask", labelpath);
-    find_replace(labelpath, "JPEGImages", "mask", labelpath);
-    find_replace(labelpath, ".jpg", ".txt", labelpath);
-    find_replace(labelpath, ".JPG", ".txt", labelpath);
-    find_replace(labelpath, ".JPEG", ".txt", labelpath);
-    image mask = make_image(w, h, classes);
-    FILE *file = fopen(labelpath, "r");
-    if(!file) file_error(labelpath);
-    char buff[32788];
-    int id;
-    image part = make_image(w, h, 1);
-    while(fscanf(file, "%d %s", &id, buff) == 2){
-        int n = 0;
-        int *rle = read_intlist(buff, &n, 0);
-        load_rle(part, rle, n);
-        or_image(part, mask, id);
-        free(rle);
-    }
-    //exclusive_image(mask);
-    fclose(file);
-    free_image(part);
-    return mask;
+image get_segmentation_image(char *path, int w, int h, int classes){
+  char labelpath[4096];
+  find_replace(path, "images", "mask", labelpath);
+  find_replace(labelpath, "JPEGImages", "mask", labelpath);
+  find_replace(labelpath, ".jpg", ".txt", labelpath);
+  find_replace(labelpath, ".JPG", ".txt", labelpath);
+  find_replace(labelpath, ".JPEG", ".txt", labelpath);
+  image mask = make_image(w, h, classes);
+  FILE *file = fopen(labelpath, "r");
+  if(!file) file_error(labelpath);
+  char buff[32788];
+  int id;
+  image part = make_image(w, h, 1);
+  while(fscanf(file, "%d %s", &id, buff) == 2){
+    int n = 0;
+    int *rle = read_intlist(buff, &n, 0);
+    load_rle(part, rle, n);
+    or_image(part, mask, id);
+    free(rle);
+  }
+  //exclusive_image(mask);
+  fclose(file);
+  free_image(part);
+  return mask;
 }
 
 image get_segmentation_image2(char *path, int w, int h, int classes)
@@ -1466,8 +1461,7 @@ data load_all_cifar10(){
     return d;
 }
 
-data load_go(char *filename)
-{
+data load_go(char *filename){
     FILE *fp = fopen(filename, "rb");
     matrix X = matrix(3363059, 361);
     matrix y = matrix(3363059, 361);
