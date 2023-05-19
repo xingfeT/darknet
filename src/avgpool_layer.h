@@ -8,24 +8,14 @@
 
 
 
-struct AvgPoolLayer :public layer{
+struct avgpool_layer :public layer{
   image get_image();
-  void resize_layer(int w, int h);
+  void resize(int w, int h);
+  void forward(struct network) ;
+  void backward(struct network);
 };
 
-AvgPoolLayer* make_avgpool_layer(int batch, int w, int h, int c);
-typedef AvgPoolLayer avgpool_layer;
-
-
-
-
-/* void forward_avgpool_layer(const avgpool_layer l, network net); */
-/* void backward_avgpool_layer(const avgpool_layer l, network net); */
-
-/* #ifdef GPU */
-/* void forward_avgpool_layer_gpu(avgpool_layer l, network net); */
-/* void backward_avgpool_layer_gpu(avgpool_layer l, network net); */
-/* #endif */
+avgpool_layer* make_avgpool_layer(int batch, int w, int h, int c);
 
 #endif
 

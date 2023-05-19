@@ -133,25 +133,25 @@ struct size_params{
 
 route_layer* parse_route(list *options, size_params params, network *net);
 
-local_layer* parse_local(list *options, size_params params){
-  int n = option_find(options, "filters",1);
+// local_layer* parse_local(list *options, size_params params){
+//   int n = option_find(options, "filters",1);
   
-  int size = option_find(options, "size",1);
-  int stride = option_find(options, "stride",1);
-  int pad = option_find(options, "pad",0);
-  char *activation_s = option_find_str(options, "activation", "logistic");
+//   int size = option_find(options, "size",1);
+//   int stride = option_find(options, "stride",1);
+//   int pad = option_find(options, "pad",0);
+//   char *activation_s = option_find_str(options, "activation", "logistic");
   
-  ACTIVATION activation = get_activation(activation_s);
+//   ACTIVATION activation = get_activation(activation_s);
 
-  int batch,h,w,c;
-  h = params.h;
-  w = params.w;
-  c = params.c;
-  batch=params.batch;
-  if(!(h && w && c)) error("Layer before local layer must output image.");
+//   int batch,h,w,c;
+//   h = params.h;
+//   w = params.w;
+//   c = params.c;
+//   batch=params.batch;
+//   if(!(h && w && c)) error("Layer before local layer must output image.");
 
-  return make_local_layer(batch,h,w,c,n,size,stride,pad,activation);
-}
+//   return make_local_layer(batch,h,w,c,n,size,stride,pad,activation);
+// }
 
 layer* parse_deconvolutional(list *options, size_params params){
     int n = option_find(options, "filters",1);
@@ -771,66 +771,64 @@ network *parse_network_cfg(char *filename){
     
     LAYER_TYPE lt = string_to_layer_type(s->type);
     if(lt == CONVOLUTIONAL){
-      l = parse_convolutional(options, params);
+      //l = parse_convolutional(options, params);
     }else if(lt == DECONVOLUTIONAL){
-      l = parse_deconvolutional(options, params);
+      //l = parse_deconvolutional(options, params);
     }else if(lt == LOCAL){
-      l = parse_local(options, params);
+      //l = parse_local(options, params);
     }else if(lt == ACTIVE){
-      l = parse_activation(options, params);
+      //l = parse_activation(options, params);
     }else if(lt == LOGXENT){
-      l = parse_logistic(options, params);
+      //l = parse_logistic(options, params);
     }else if(lt == L2NORM){
-      l = parse_l2norm(options, params);
+      //l = parse_l2norm(options, params);
     }else if(lt == RNN){
-      l = parse_rnn(options, params);
+      //l = parse_rnn(options, params);
     }else if(lt == GRU){
-      l = parse_gru(options, params);
+      //l = parse_gru(options, params);
     }else if (lt == LSTM) {
-      l = parse_lstm(options, params);
+      //l = parse_lstm(options, params);
     }else if(lt == CRNN){
-      l = parse_crnn(options, params);
+      //l = parse_crnn(options, params);
     }else if(lt == CONNECTED){
-      l = parse_connected(options, params);
+      //l = parse_connected(options, params);
     }else if(lt == CROP){
-      l = parse_crop(options, params);
+      //l = parse_crop(options, params);
     }else if(lt == COST){
-      l = parse_cost(options, params);
+      //l = parse_cost(options, params);
     }else if(lt == REGION){
-      l = parse_region(options, params);
+      //l = parse_region(options, params);
     }else if(lt == YOLO){
-      l = parse_yolo(options, params);
+      //l = parse_yolo(options, params);
     }else if(lt == ISEG){
-      l = parse_iseg(options, params);
+       //l = parse_iseg(options, params);
     }else if(lt == DETECTION){
-      l = parse_detection(options, params);
+       //l = parse_detection(options, params);
     }else if(lt == SOFTMAX){
-      l = parse_softmax(options, params);
+       //l = parse_softmax(options, params);
       net->hierarchy = l->softmax_tree;
     }else if(lt == NORMALIZATION){
-      l = parse_normalization(options, params);
+       //l = parse_normalization(options, params);
+      
     }else if(lt == BATCHNORM){
-      l = parse_batchnorm(options, params);
+       //l = parse_batchnorm(options, params);
     }else if(lt == MAXPOOL){
-      l = parse_maxpool(options, params);
+       //l = parse_maxpool(options, params);
     }else if(lt == REORG){
-      l = parse_reorg(options, params);
+       //l = parse_reorg(options, params);
     }else if(lt == AVGPOOL){
-      l = parse_avgpool(options, params);
+       //l = parse_avgpool(options, params);
     }else if(lt == ROUTE){
-      l = parse_route(options, params, net);
+       //l = parse_route(options, params, net);
     }else if(lt == UPSAMPLE){
-      l = parse_upsample(options, params, net);
+       //l = parse_upsample(options, params, net);
     }else if(lt == SHORTCUT){
-      l = parse_shortcut(options, params, net);
+       //l = parse_shortcut(options, params, net);
     }else if(lt == DROPOUT){
       l = parse_dropout(options, params);
       l->output = net->layers[count-1]->output;
       l->delta = net->layers[count-1]->delta;
-#ifdef GPU
-      l->output_gpu = net->layers[count-1]->output_gpu;
-      l->delta_gpu = net->layers[count-1]->delta_gpu;
-#endif
+
     }else{
       fprintf(stderr, "Type not recognized: %s\n", s->type);
     }
@@ -868,22 +866,9 @@ network *parse_network_cfg(char *filename){
   net->output = out->output;
   net->input = (float*)calloc(net->inputs*net->batch, sizeof(float));
   net->truth = (float*)calloc(net->truths*net->batch, sizeof(float));
-#ifdef GPU
-  net->output_gpu = out.output_gpu;
-  net->input_gpu = cuda_make_array(net->input, net->inputs*net->batch);
-  net->truth_gpu = cuda_make_array(net->truth, net->truths*net->batch);
-#endif
   if(workspace_size){
     //printf("%ld\n", workspace_size);
-#ifdef GPU
-    if(gpu_index >= 0){
-      net->workspace = cuda_make_array(0, (workspace_size-1)/sizeof(float)+1);
-    }else {
-      net->workspace = calloc(1, workspace_size);
-    }
-#else
     net->workspace = (float*)calloc(1, workspace_size);
-#endif
   }
   return net;
 }

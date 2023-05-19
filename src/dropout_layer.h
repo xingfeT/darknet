@@ -7,7 +7,7 @@
 struct dropout_layer :public layer {
   void forward(network net);
   void backward(network net);
-  void resize_dropout_layer(dropout_layer *l, int inputs);
+  void resize(int inputs);
 };
 
 dropout_layer* make_dropout_layer(int batch, int inputs, float probability);

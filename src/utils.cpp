@@ -264,14 +264,12 @@ void malloc_error(){
     exit(-1);
 }
 
-void file_error(char *s)
-{
-    fprintf(stderr, "Couldn't open file: %s\n", s);
-    exit(0);
+void file_error(const char *s){
+  fprintf(stderr, "Couldn't open file: %s\n", s);
+  exit(0);
 }
 
-list *split_str(char *s, char delim)
-{
+list *split_str(char *s, char delim){
     size_t i;
     size_t len = strlen(s);
     list *l = make_list();
@@ -375,31 +373,31 @@ void write_all(int fd, char *buffer, size_t bytes){
 
 
 void init_adam(layer* l){
-  l->m = calloc(l->inputs*l->outputs, sizeof(float));
-  l->v = calloc(l->inputs*l->outputs, sizeof(float));
-  l->bias_m = calloc(l->outputs, sizeof(float));
-  l->scale_m = calloc(l->outputs, sizeof(float));
-  l->bias_v = calloc(l->outputs, sizeof(float));
-  l->scale_v = calloc(l->outputs, sizeof(float));
+  l->m = (float*)calloc(l->inputs*l->outputs, sizeof(float));
+  l->v = (float*)calloc(l->inputs*l->outputs, sizeof(float));
+  l->bias_m = (float*)calloc(l->outputs, sizeof(float));
+  l->scale_m = (float*)calloc(l->outputs, sizeof(float));
+  l->bias_v = (float*)calloc(l->outputs, sizeof(float));
+  l->scale_v = (float*)calloc(l->outputs, sizeof(float));
 }
 
-void init_batch_normalize(layer* l){
-  l->scales = calloc(outputs, sizeof(float));
-  l->scale_updates = calloc(outputs, sizeof(float));
-  for(i = 0; i < outputs; ++i){
+void init_batch_normalize(layer* l, int outputs, int batch){
+  l->scales = (float*)calloc(outputs, sizeof(float));
+  l->scale_updates = (float*)calloc(outputs, sizeof(float));
+  for(int i = 0; i < outputs; ++i){
     l->scales[i] = 1;
   }
 
-  l->mean = calloc(outputs, sizeof(float));
-  l->mean_delta = calloc(outputs, sizeof(float));
-  l->variance = calloc(outputs, sizeof(float));
-  l->variance_delta = calloc(outputs, sizeof(float));
+  l->mean = (float*)calloc(outputs, sizeof(float));
+  l->mean_delta = (float*)calloc(outputs, sizeof(float));
+  l->variance = (float*)calloc(outputs, sizeof(float));
+  l->variance_delta = (float*)calloc(outputs, sizeof(float));
 
-  l->rolling_mean = calloc(outputs, sizeof(float));
-  l->rolling_variance = calloc(outputs, sizeof(float));
+  l->rolling_mean = (float*)calloc(outputs, sizeof(float));
+  l->rolling_variance = (float*)calloc(outputs, sizeof(float));
 
-  l->x = calloc(batch*outputs, sizeof(float));
-  l->x_norm = calloc(batch*outputs, sizeof(float));
+  l->x = (float*)calloc(batch*outputs, sizeof(float));
+  l->x_norm = (float*)calloc(batch*outputs, sizeof(float));
 }
 
 list *parse_csv_line(char *line){

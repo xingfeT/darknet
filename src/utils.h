@@ -40,8 +40,9 @@ void strip_char(char *s, char bad);
 list *split_str(char *s, char delim);
 char *fgetl(FILE *fp);
 list *parse_csv_line(char *line);
-char *copy_string(char *s);
-int count_fields(char *line);
+
+int count_fields(const char *line);
+
 float *parse_fields(char *line, int n);
 void translate_array(float *a, int n, float s);
 float constrain(float min, float max, float a);

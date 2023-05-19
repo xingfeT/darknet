@@ -50,7 +50,7 @@ make_connected_layer(int batch, int inputs, int outputs, ACTIVATION activation, 
     if(adam) init_adam(l);
 
     
-    if(batch_normalize) init_batch_normalize(l);
+    if(batch_normalize) init_batch_normalize(l, outputs, batch);
 
     l->activation = activation;
     fprintf(stderr, "connected                            %4d  ->  %4d\n", inputs, outputs);

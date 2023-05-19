@@ -24,10 +24,10 @@ extern "C" {
 #define SECRET_NUM -1234
 extern int gpu_index;
 
-typedef struct{
-    int classes;
-    char **names;
-} metadata;
+struct metadata{
+  int classes;
+  char **names;
+} ;
 
 metadata get_metadata(char *file);
 
@@ -197,16 +197,13 @@ typedef struct network{
     
     virtual void forward(struct network)  = 0;
     virtual void backward(struct network)  = 0;
-     virtual void update(update_args) {
-       
-}
+    virtual void update(update_args) {
+    }
      
-     virtual void increment_layer(int steps){
-       
-     }
-     virtual void resize(int, int) {
-       
-     }
+    virtual void increment_layer(int steps){
+    }
+    virtual void resize(int, int) {
+    }
     
     int batch_normalize;
     int shortcut;
@@ -646,10 +643,17 @@ image make_random_image(int w, int h, int c);
 // void denormalize_connected_layer(layer *l);
 // void denormalize_convolutional_layer(layer *l);
   
-void statistics_connected_layer(layer *l);
-void rescale_weights(layer *l, float scale, float trans);
-void rgbgr_weights(layer *l);
-image *get_weights(layer *l);
+//void statistics_connected_layer(layer *l);
+  
+  static void rescale_weights(layer *l, float scale, float trans){
+    
+}
+static   void rgbgr_weights(layer *l){
+    
+}
+static   image *get_weights(layer *l){
+  return nullptr;
+}
 
 void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const char *filename, char **names, int classes, int frame_skip, char *prefix, int avg, float hier_thresh, int w, int h, int fps, int fullscreen);
 void get_detection_detections(layer *l, int w, int h, float thresh, detection *dets);
@@ -659,10 +663,19 @@ int option_find_int(list *l, char *key, int def);
 int option_find_int_quiet(list *l, char *key, int def);
 
 network *parse_network_cfg(char *filename);
-void save_weights(network *net, char *filename);
-void load_weights(network *net, char *filename);
-void save_weights_upto(network *net, char *filename, int cutoff);
-void load_weights_upto(network *net, char *filename, int start, int cutoff);
+  
+  static void save_weights(network *net, char *filename){
+    
+}
+  static void load_weights(network *net, char *filename){
+    
+}
+  static void save_weights_upto(network *net, char *filename, int cutoff){
+    
+  }
+  static void load_weights_upto(network *net, char *filename, int start, int cutoff){
+    
+  }
 
 void zero_objectness(layer *l);
 void get_region_detections(layer *l, int w, int h, int netw, int neth, float thresh, int *map, float tree_thresh, int relative, detection *dets);
@@ -787,7 +800,7 @@ float rand_normal();
 float rand_uniform(float min, float max);
 
   void init_adam(layer* l);
-void init_batch_normalize(layer* l);
+  void init_batch_normalize(layer* l, int, int);
   
 #ifdef __cplusplus
 }

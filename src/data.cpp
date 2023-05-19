@@ -61,7 +61,9 @@ char **find_replace_paths(char **paths, int n, const char *find, char *replace){
   }
   return replace_paths;
 }
-matrix load_image_paths_gray(char **paths, int n, int w, int h);
+matrix load_image_paths_gray(char **paths, int n, int w, int h){
+  return matrix();
+}
 
 // matrix load_image_paths_gray(char **paths, int n, int w, int h){
 //   int i;
@@ -83,7 +85,10 @@ matrix load_image_paths_gray(char **paths, int n, int w, int h);
 //   }
 //   return X;
 // }
-matrix load_image_paths(char **paths, int n, int w, int h);
+
+matrix load_image_paths(char **paths, int n, int w, int h){
+  return matrix();
+}
 
 // matrix load_image_paths(char **paths, int n, int w, int h){
 //   int i;
@@ -99,7 +104,11 @@ matrix load_image_paths(char **paths, int n, int w, int h);
 //   }
 //   return X;
 // }
-
+ matrix load_image_augment_paths(char **paths, int n, int min, int max, int size,
+                                 float angle, float aspect, float hue, float saturation,
+                                 float exposure, int center){
+   return matrix();
+}
 // matrix load_image_augment_paths(char **paths, int n, int min, int max, int size,
 //                                 float angle, float aspect, float hue, float saturation,
 //                                 float exposure, int center){
@@ -1120,8 +1129,7 @@ pthread_t load_data_in_thread(load_args args)
     return thread;
 }
 
-void *load_threads(void *ptr)
-{
+void *load_threads(void *ptr){
     int i;
     load_args args = *(load_args *)ptr;
     if (args.threads == 0) args.threads = 1;
@@ -1339,27 +1347,28 @@ matrix concat_matrix(matrix m1, matrix m2){
   return m;
 }
 
-data concat_data(data d1, data d2)
-{
+data concat_data(data d1, data d2){
     data d = {0};
     d.shallow = 1;
+
     d.X = concat_matrix(d1.X, d2.X);
     d.y = concat_matrix(d1.y, d2.y);
+    
     d.w = d1.w;
     d.h = d1.h;
     return d;
 }
 
-// data concat_datas(data *d, int n){
-//     int i;
-//     data out = {0};
-//     for(i = 0; i < n; ++i){
-//         data new = concat_data(d[i], out);
-//         free_data(out);
-//         out = new;
-//     }
-//     return out;
-// }
+data concat_datas(data *d, int n){
+  int i;
+  data out = {0};
+  for(i = 0; i < n; ++i){
+    data n = concat_data(d[i], out);
+    free_data(out);
+    out = n;
+  }
+  return out;
+}
 
 data load_categorical_data_csv(char *filename, int target, int k){
   data d = {0};

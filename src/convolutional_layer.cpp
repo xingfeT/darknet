@@ -62,23 +62,25 @@ void binarize_input(float *input, int n, int size, float *binary)
     }
 }
 
-int convolutional_out_height(convolutional_layer l)
-{
-    return (l.h + 2*l.pad - l.size) / l.stride + 1;
+int convolutional_layer::out_height(){
+  convolutional_layer* l = this;
+  return (l->h + 2*l->pad - l->size) / l->stride + 1;
 }
 
-int convolutional_out_width(convolutional_layer l)
-{
-    return (l.w + 2*l.pad - l.size) / l.stride + 1;
+int convolutional_layer::out_width(){
+  convolutional_layer* l = this;
+  return (l->w + 2*l->pad - l->size) / l->stride + 1;
 }
 
-image get_convolutional_image(convolutional_layer l)
-{
-    return float_to_image(l.out_w,l.out_h,l.out_c,l.output);
+image convolutional_layer::get_image(){
+  convolutional_layer* l = this;
+    return float_to_image(l->out_w,l->out_h,l->out_c,l->output);
 }
 
-image get_convolutional_delta(convolutional_layer l){
-    return float_to_image(l.out_w,l.out_h,l.out_c,l.delta);
+image convolutional_layer::get_delta(){
+  convolutional_layer* l = this;
+  
+  return float_to_image(l->out_w,l->out_h,l->out_c,l->delta);
 }
 
 size_t convolutional_layer::workspaceSize(){
@@ -218,8 +220,8 @@ void convolutional_layer::resize(int w, int h){
   
     l->w = w;
     l->h = h;
-    int out_w = convolutional_out_width(*l);
-    int out_h = convolutional_out_height(*l);
+    int out_w = l->out_width();
+    int out_h = l->out_height();
 
     l->out_w = out_w;
     l->out_h = out_h;
@@ -353,7 +355,7 @@ void convolutional_layer::backward(network net){
                 gemm(1,0,n,k,m,1,a,n,b,k,0,c,k);
 
                 if (l->size != 1) {
-                    col2im_cpu(net.workspace, l->c/l->groups, l->h, l->w, l->size, l->stride, l->pad, imd);
+                  //col2im_cpu(net.workspace, l->c/l->groups, l->h, l->w, l->size, l->stride, l->pad, imd);
                 }
             }
         }
@@ -403,16 +405,15 @@ void convolutional_layer::rgbgr_weights(){
 
 void convolutional_layer::rescale_weights(float scale, float trans){
   convolutional_layer* l = this;
-  
-    int i;
-    for(i = 0; i < l->n; ++i){
-        image im = l->get_weight(i);
-        if (im.c == 3) {
-            scale_image(im, scale);
-            float sum = sum_array(im.data, im.w*im.h*im.c);
-            l->biases[i] += sum*trans;
-        }
+  int i;
+  for(i = 0; i < l->n; ++i){
+    image im = l->get_weight(i);
+    if (im.c == 3) {
+      scale_image(im, scale);
+      float sum = sum_array(im.data, im.w*im.h*im.c);
+      l->biases[i] += sum*trans;
     }
+  }
 }
 
 image *convolutional_layer::get_weights(){
@@ -423,10 +424,10 @@ image *convolutional_layer::get_weights(){
     weights[i] = copy_image(l->get_weight(i));
     normalize_image(weights[i]);
     /*
-           char buff[256];
-           sprintf(buff, "filter%d", i);
-           save_image(weights[i], buff);
-         */
+      char buff[256];
+      sprintf(buff, "filter%d", i);
+      save_image(weights[i], buff);
+    */
   }
   //error("hey");
   return weights;

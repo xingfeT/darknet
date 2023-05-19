@@ -11,6 +11,7 @@ struct connected_layer :public layer{
   void update(update_args);
   void statistics();
   void denormalize();
+
   
   layer* batch_normalize_layer =nullptr;
 };

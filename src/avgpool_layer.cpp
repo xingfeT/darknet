@@ -3,8 +3,10 @@
 #include <stdio.h>
 
 avgpool_layer* make_avgpool_layer(int batch, int w, int h, int c){
-    fprintf(stderr, "avg                     %4d x%4d x%4d   ->  %4d\n",  w, h, c, c);
-    avgpool_layer l = {0};
+  fprintf(stderr, "avg                     %4d x%4d x%4d   ->  %4d\n",  w, h, c, c);
+    
+  avgpool_layer* l = new avgpool_layer();
+    
     l->type = AVGPOOL;
     l->batch = batch;
     l->h = h;
@@ -16,20 +18,13 @@ avgpool_layer* make_avgpool_layer(int batch, int w, int h, int c){
     l->outputs = l->out_c;
     l->inputs = h*w*c;
     int output_size = l->outputs * batch;
-    l->output =  calloc(output_size, sizeof(float));
-    l->delta =   calloc(output_size, sizeof(float));
-    l->forward = forward_avgpool_layer;
-    l->backward = backward_avgpool_layer;
-    #ifdef GPU
-    l->forward_gpu = forward_avgpool_layer_gpu;
-    l->backward_gpu = backward_avgpool_layer_gpu;
-    l->output_gpu  = cuda_make_array(l->output, output_size);
-    l->delta_gpu   = cuda_make_array(l->delta, output_size);
-    #endif
+
+    l->output =  (float*)calloc(output_size, sizeof(float));
+    l->delta =   (float*)calloc(output_size, sizeof(float));
     return l;
 }
 
-void resize_avgpool_layer(avgpool_layer *l, int w, int h){
+void avgpool_layer::resize(int w, int h){
   avgpool_layer* l = this;
   
   l->w = w;
@@ -37,7 +32,7 @@ void resize_avgpool_layer(avgpool_layer *l, int w, int h){
   l->inputs = h*w*l->c;
 }
 
-void forward_avgpool_layer(const avgpool_layer l, network net){
+void avgpool_layer::forward(network net){
   avgpool_layer* l = this;
     int b,i,k;
 
@@ -54,19 +49,19 @@ void forward_avgpool_layer(const avgpool_layer l, network net){
     }
 }
 
-void backward_avgpool_layer(const avgpool_layer l, network net){
+void avgpool_layer::backward(network net){
   avgpool_layer* l = this;
   
-    int b,i,k;
-
-    for(b = 0; b < l->batch; ++b){
-        for(k = 0; k < l->c; ++k){
-            int out_index = k + b*l->c;
-            for(i = 0; i < l->h*l->w; ++i){
-                int in_index = i + l->h*l->w*(k + b*l->c);
-                net.delta[in_index] += l->delta[out_index] / (l->h*l->w);
-            }
-        }
+  int b,i,k;
+  
+  for(b = 0; b < l->batch; ++b){
+    for(k = 0; k < l->c; ++k){
+      int out_index = k + b*l->c;
+      for(i = 0; i < l->h*l->w; ++i){
+        int in_index = i + l->h*l->w*(k + b*l->c);
+        net.delta[in_index] += l->delta[out_index] / (l->h*l->w);
+      }
     }
+  }
 }
 

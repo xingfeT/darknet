@@ -1,8 +1,18 @@
     add_library(dn
+    im2col.cpp
+
+    activations.cpp
+    gemm.cpp
+
+
     list.cc
 #    local_layer.cpp
-    deconvolutional_layer.cpp
+#    deconvolutional_layer.cpp
     convolutional_layer.cpp
+    normalization_layer.cpp
+    cuda.cpp
+    weights.cpp
+
     crnn_layer.cpp
     rnn_layer.cpp
     gru_layer.cpp
