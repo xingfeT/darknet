@@ -1,6 +1,12 @@
     add_library(dn
     im2col.cpp
 
+    activation_kernels.cu
+
+    avgpool_layer_kernels.cu
+
+    blas_kernels.cu
+
     col2im.cpp
 
     activations.cpp

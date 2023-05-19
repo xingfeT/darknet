@@ -15,7 +15,8 @@ __global__ void col2im_gpu_kernel(const int n, const float* data_col,
         const int pad,
         const int stride,
         const int height_col, const int width_col,
-        float *data_im) {
+                                  float *data_im) {
+
     int index = blockIdx.x*blockDim.x+threadIdx.x;
     for(; index < n; index += blockDim.x*gridDim.x){
         float val = 0;
@@ -55,4 +56,3 @@ void col2im_gpu(float *data_col,
                 stride, height_col,
                 width_col, data_im);
 }
-
