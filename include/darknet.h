@@ -17,9 +17,6 @@
     #endif
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #define SECRET_NUM -1234
 extern int gpu_index;
@@ -110,16 +107,16 @@ struct network;
 typedef struct network network;
 
 struct layer;
-  
-  
- 
+
+
+
   //void free_layer(layer);
 
 typedef enum {
     CONSTANT, STEP, EXP, POLY, STEPS, SIG, RANDOM
 } learning_rate_policy;
   struct layer;
-  
+
 typedef struct network{
     int n;
     int batch;
@@ -128,7 +125,8 @@ typedef struct network{
     float epoch;
     int subdivisions;
     layer **layers;
-    float *output;
+  float *output;
+
     learning_rate_policy policy;
 
     float learning_rate;
@@ -139,9 +137,9 @@ typedef struct network{
     float power;
     int time_steps;
     int step;
-  
+
   size_t max_batches;
-  
+
     float *scales;
     int   *steps;
     int num_steps;
@@ -175,6 +173,8 @@ typedef struct network{
     float *input;
     float *truth;
     float *delta;
+
+
     float *workspace;
     int train;
     int index;
@@ -194,17 +194,17 @@ typedef struct network{
     LAYER_TYPE type;
     ACTIVATION activation;
     COST_TYPE cost_type;
-    
+
     virtual void forward(struct network)  = 0;
     virtual void backward(struct network)  = 0;
     virtual void update(update_args) {
     }
-     
+
     virtual void increment_layer(int steps){
     }
     virtual void resize(int, int) {
     }
-    
+
     int batch_normalize;
     int shortcut;
     int batch;
@@ -322,7 +322,11 @@ typedef struct network{
     float * weight_updates;
 
     float * delta;
-    float * output;
+
+     float * delta_gpu;
+     float * output_gpu;
+
+     float * output;
     float * loss;
     float * squared;
     float * norms;
@@ -342,7 +346,7 @@ typedef struct network{
 
     float * m;
     float * v;
-    
+
     float * bias_m;
     float * bias_v;
     float * scale_m;
@@ -367,7 +371,7 @@ typedef struct network{
     float *g_cpu;
     float *o_cpu;
     float *c_cpu;
-    float *dc_cpu; 
+    float *dc_cpu;
 
     float * binary_input;
 
@@ -394,7 +398,7 @@ typedef struct network{
 
     struct layer *input_h_layer;
     struct layer *state_h_layer;
-	
+
     struct layer *wz;
     struct layer *uz;
     struct layer *wr;
@@ -416,7 +420,7 @@ typedef struct network{
 
   };
 
-  
+
 typedef struct {
     int w;
     int h;
@@ -461,10 +465,10 @@ typedef struct detection{
     float* operator()(int i) {
       return (vals + i*cols);
     }
-    
+
     matrix(int, int);
     matrix(matrix const &m);
-    
+
     ~matrix();
     void scale(float scale);
     void resize(int size);
@@ -472,11 +476,11 @@ typedef struct detection{
     matrix():rows(0),cols(0),vals(nullptr){}
     void to_csv();
     void print() const;
-    
+
     static matrix from_csv(const char *filename);
-    
+
 } ;
-  
+
 
 
 typedef struct{
@@ -512,13 +516,13 @@ typedef enum {
   struct load_args{
   load_args(){
   };
-    
+
     int threads;
     int n;
     int m;
     int h;
     int w;
-    
+
     int out_w;
     int out_h;
     int nh;
@@ -527,13 +531,13 @@ typedef enum {
     int min;
     int max;
     int size;
-    
+
     int classes;
     int background;
     int scale;
     int center;
     int coords;
-    
+
     float jitter;
     float angle;
     float aspect;
@@ -542,7 +546,7 @@ typedef enum {
     float hue;
     data_type type;
 
-    
+
     char **paths  = nullptr;
     char *path= nullptr;
     char **labels= nullptr;
@@ -579,7 +583,7 @@ typedef struct list{
 pthread_t load_data(load_args args);
 list *read_data_cfg(const char *filename);
 list *read_cfg(const char *filename);
-  
+
 unsigned char *read_file(char *filename);
 data resize_data(data orig, int w, int h);
 data *tile_data(data orig, int divs, int size);
@@ -638,21 +642,21 @@ float matrix_topk_accuracy(matrix truth, matrix guess, int k);
   //void scale_matrix(matrix m, float scale);
 
   matrix csv_to_matrix(const char *filename);
-  
+
 float *network_accuracies(network *net, data d, int n);
 float train_network_datum(network *net);
 image make_random_image(int w, int h, int c);
 
 // void denormalize_connected_layer(layer *l);
 // void denormalize_convolutional_layer(layer *l);
-  
+
 //void statistics_connected_layer(layer *l);
-  
+
   static void rescale_weights(layer *l, float scale, float trans){
-    
+
 }
 static   void rgbgr_weights(layer *l){
-    
+
 }
 static   image *get_weights(layer *l){
   return nullptr;
@@ -666,18 +670,18 @@ int option_find_int(list *l, char *key, int def);
 int option_find_int_quiet(list *l, char *key, int def);
 
 network *parse_network_cfg(char *filename);
-  
+
   static void save_weights(network *net, char *filename){
-    
+
 }
   static void load_weights(network *net, char *filename){
-    
+
 }
   static void save_weights_upto(network *net, char *filename, int cutoff){
-    
+
   }
   static void load_weights_upto(network *net, char *filename, int start, int cutoff){
-    
+
   }
 
 void zero_objectness(layer *l);
@@ -707,13 +711,13 @@ void draw_box_width(image a, int x1, int y1, int x2, int y2, int w, float r, flo
 float get_current_rate(network *net);
 
   void composite_3d(char *f1, char *f2, const char *out, int delta);
-  
+
 data load_data_old(char **paths, int n, int m, char **labels, int k, int w, int h);
 size_t get_current_batch(network *net);
 void constrain_image(image im);
 image get_network_image_layer(network *net, int i);
 layer* get_network_output_layer(network *net);
-  
+
 void top_predictions(network *net, int n, int *index);
 void flip_image(image a);
 image float_to_image(int w, int h, int c, float *data);
@@ -764,16 +768,16 @@ pthread_t load_data_in_thread(load_args args);
 void load_data_blocking(load_args args);
 
   list *get_paths(const char *filename);
-  
+
 void hierarchy_predictions(float *predictions, int n, tree *hier, int only_leaves, int stride);
 void change_leaves(tree *t, char *leaf_list);
 
 int find_int_arg(int argc, char **argv, const char *arg, int def);
 float find_float_arg(int argc, char **argv, const char *arg, float def);
 int find_arg(int argc, char* argv[], const char *arg);
- 
+
 char *find_char_arg(int argc, char **argv, const char *arg, char *def);
-  
+
 char *basecfg(char *cfgfile);
 void find_replace(char *str, const char *orig, const char *rep,
                   char *output);
@@ -804,8 +808,6 @@ float rand_uniform(float min, float max);
 
   void init_adam(layer* l);
   void init_batch_normalize(layer* l, int, int);
-  
-#ifdef __cplusplus
-}
-#endif
+
+
 #endif

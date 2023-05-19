@@ -15,10 +15,3 @@ struct normalization_layer:public layer{
 normalization_layer* make_normalization_layer(int batch,
                                               int w, int h, int c, int size,
                                               float alpha, float beta, float kappa);
-
-
-
-#ifdef GPU
-void forward_normalization_layer_gpu(const layer layer, network net);
-void backward_normalization_layer_gpu(const layer layer, network net);
-#endif

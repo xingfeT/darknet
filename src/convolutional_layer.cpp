@@ -16,12 +16,6 @@ void swap_binary(convolutional_layer *l){
     float *swap = l->weights;
     l->weights = l->binary_weights;
     l->binary_weights = swap;
-
-#ifdef GPU
-    swap = l->weights_gpu;
-    l->weights_gpu = l->binary_weights_gpu;
-    l->binary_weights_gpu = swap;
-#endif
 }
 
 void binarize_weights(float *weights, int n, int size, float *binary)
@@ -79,7 +73,7 @@ image convolutional_layer::get_image(){
 
 image convolutional_layer::get_delta(){
   convolutional_layer* l = this;
-  
+
   return float_to_image(l->out_w,l->out_h,l->out_c,l->delta);
 }
 
@@ -107,7 +101,7 @@ convolutional_layer* make_convolutional_layer(int batch, int h, int w, int c, in
     l->stride = stride;
     l->size = size;
     l->pad = padding;
-    
+
     l->batch_normalize = batch_normalize;
 
     l->weights = (float*)calloc(c/groups*n*size*size, sizeof(float));
@@ -128,17 +122,17 @@ convolutional_layer* make_convolutional_layer(int batch, int h, int w, int c, in
 
     int out_w = l->out_width();
     int out_h = l->out_height();
-    
+
     l->out_h = out_h;
     l->out_w = out_w;
     l->out_c = n;
-    
+
     l->outputs = l->out_h * l->out_w * l->out_c;
     l->inputs = l->w * l->h * l->c;
 
     l->output = (float*)calloc(l->batch*l->outputs, sizeof(float));
     l->delta  = (float*)calloc(l->batch*l->outputs, sizeof(float));
-    
+
 
     if(binary){
       //todo
@@ -146,7 +140,7 @@ convolutional_layer* make_convolutional_layer(int batch, int h, int w, int c, in
       //l->cweights = calloc(l->nweights, sizeof(char));
       //l->scales = calloc(n, sizeof(float));
     }
-    
+
     if(xnor){
       //todo
       //l->binary_weights = calloc(l->nweights, sizeof(float));
@@ -217,7 +211,7 @@ void test_convolutional_layer()
 
 void convolutional_layer::resize(int w, int h){
   convolutional_layer* l = this;
-  
+
     l->w = w;
     l->h = h;
     int out_w = l->out_width();
@@ -231,7 +225,7 @@ void convolutional_layer::resize(int w, int h){
 
     l->output = (float*)realloc(l->output, l->batch*l->outputs*sizeof(float));
     l->delta  = (float*)realloc(l->delta,  l->batch*l->outputs*sizeof(float));
-    
+
     if(l->batch_normalize){
       l->x = (float*)realloc(l->x, l->batch*l->outputs*sizeof(float));
       l->x_norm  = (float*)realloc(l->x_norm, l->batch*l->outputs*sizeof(float));
@@ -271,10 +265,10 @@ void backward_bias(float *bias_updates, float *delta, int batch, int n, int size
 
 void convolutional_layer::forward(network net){
   convolutional_layer* l = this;
-    
+
   int i, j;
   fill_cpu(l->outputs*l->batch, 0, l->output, 1);
-  
+
   if(l->xnor){
     binarize_weights(l->weights, l->n, l->c/l->groups*l->size*l->size, l->binary_weights);
     // swap_binary(&l);
@@ -291,7 +285,7 @@ void convolutional_layer::forward(network net){
       float *b = net.workspace;
       float *c = l->output + (i*l->groups + j)*n*m;
       float *im =  net.input + (i*l->groups + j)*l->c/l->groups*l->h*l->w;
-      
+
       if (l->size == 1) {
         b = im;
       } else {
@@ -300,7 +294,7 @@ void convolutional_layer::forward(network net){
       gemm(0,0,m,n,k,1,a,k,b,n,1,c,n);
     }
   }
-  
+
     if(l->batch_normalize){
       l->batchnorm_layer->forward(net);
     } else {
@@ -338,7 +332,7 @@ void convolutional_layer::backward(network net){
             if(l->size == 1){
                 b = im;
             } else {
-                im2col_cpu(im, l->c/l->groups, l->h, l->w, 
+                im2col_cpu(im, l->c/l->groups, l->h, l->w,
                         l->size, l->stride, l->pad, b);
             }
 
@@ -364,7 +358,7 @@ void convolutional_layer::backward(network net){
 
 void convolutional_layer::update(update_args a){
   convolutional_layer* l = this;
-  
+
     float learning_rate = a.learning_rate*l->learning_rate_scale;
     float momentum = a.momentum;
     float decay = a.decay;
@@ -418,7 +412,7 @@ void convolutional_layer::rescale_weights(float scale, float trans){
 
 image *convolutional_layer::get_weights(){
   convolutional_layer* l = this;
-  
+
   image *weights = (image *)calloc(l->n, sizeof(image));
   for(int i = 0; i < l->n; ++i){
     weights[i] = copy_image(l->get_weight(i));
@@ -435,10 +429,10 @@ image *convolutional_layer::get_weights(){
 
 image *convolutional_layer::visualize(char *window, image *prev_weights){
   convolutional_layer* l = this;
-  
+
   image *single_weights = l->get_weights();
   show_images(single_weights, l->n, window);
-  
+
   image delta = l->get_image();
   image dc = collapse_image_layers(delta, 1);
   char buff[256];
@@ -448,4 +442,3 @@ image *convolutional_layer::visualize(char *window, image *prev_weights){
   free_image(dc);
   return single_weights;
 }
-

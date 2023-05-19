@@ -1,11 +1,15 @@
-    add_library(dn
+add_definitions(-DGPU)
+
+add_library(dn
     im2col.cpp
 
     activation_kernels.cu
-
     avgpool_layer_kernels.cu
-
     blas_kernels.cu
+    #crop_layer_kernels.cu
+    #deconvolutional_kernels.cu
+    #convolutional_kernels.cu
+
 
     col2im.cpp
 
@@ -45,3 +49,6 @@
     batchnorm_layer.cpp
 
         tree.cpp parser.cpp box.cpp data.cpp network.cpp layer.cpp image.cpp blas.cpp matrix.cpp utils.cpp)
+      #      set_target_properties(tgt PROPERTIES CUDA_ARCHITECTURES "35;50;72")
+      #target_compile_options(dn -DGPU)
+      target_link_libraries(dn cuda cudart cublas curand)
