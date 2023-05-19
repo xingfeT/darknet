@@ -5,17 +5,25 @@
 #include "layer.h"
 #include "network.h"
 
-layer* make_activation_layer(int batch, int inputs,
+struct activation_layer: public layer{
+  void forward(network net){
+    activation_layer * l = this;
+    copy_cpu(l->outputs*l->batch, net.input, 1, l->output, 1);
+    activate_array(l->output, l->outputs*l->batch, l->activation);
+  }
+
+  void backward(network net){
+    activation_layer * l = this;
+
+    gradient_array(l->output, l->outputs*l->batch, l->activation, l->delta);
+    copy_cpu(l->outputs*l->batch, l->delta, 1, net.delta, 1);
+  }
+};
+
+
+activation_layer* make_activation_layer(int batch, int inputs,
                              ACTIVATION activation);
 
-
-/* void forward_activation_layer(layer l, network net); */
-/* void backward_activation_layer(layer l, network net); */
-
-/* #ifdef GPU */
-/* void forward_activation_layer_gpu(layer l, network net); */
-/* void backward_activation_layer_gpu(layer l, network net); */
-/* #endif */
 
 #endif
 

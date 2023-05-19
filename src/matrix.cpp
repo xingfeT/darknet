@@ -88,7 +88,7 @@ float *pop_column(matrix *m, int c){
     return col;
 }
 
-matrix matrix::from_csv(char *filename){
+matrix matrix::from_csv(const char *filename){
   FILE *fp = fopen(filename, "r");
   if(!fp) file_error(filename);
 

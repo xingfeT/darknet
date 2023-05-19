@@ -533,7 +533,11 @@ void fill_network_boxes(network *net, int w, int h, float thresh, float hier, in
     for(j = 0; j < net->n; ++j){
         layer* l = net->layers[j];
         if(l->type == YOLO){
-          int count = get_yolo_detections(l, w, h, net->w, net->h, thresh, map, relative, dets);
+          yolo_layer* ll = (yolo_layer*)l;
+          
+          int count = get_yolo_detections(ll,
+                                          w, h, net->w, net->h,
+                                          thresh, map, relative, dets);
           dets += count;
         }
         if(l->type == REGION){

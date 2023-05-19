@@ -3,14 +3,13 @@
 #include "layer.h"
 #include "network.h"
 
-layer* make_l2norm_layer(int batch, int inputs);
+struct l2norm_layer :public layer{
+  void backward( network net);
+  void forward( network net);
+};
 
-/* void forward_l2norm_layer(const layer l, network net); */
-/* void backward_l2norm_layer(const layer l, network net); */
 
-/* #ifdef GPU */
-/* void forward_l2norm_layer_gpu(const layer l, network net); */
-/* void backward_l2norm_layer_gpu(const layer l, network net); */
-/* #endif */
+l2norm_layer* make_l2norm_layer(int batch, int inputs);
+
 
 #endif

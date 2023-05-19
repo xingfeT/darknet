@@ -16,6 +16,8 @@ struct yolo_layer:public layer{
 
 yolo_layer* make_yolo_layer(int batch, int w, int h, int n, int total, int *mask, int classes);
 
+int get_yolo_detections(yolo_layer* l, int w, int h, int netw, int neth, float thresh,
+                        int *map, int relative, detection *dets);
 
 
 #endif

@@ -542,8 +542,8 @@ layer* parse_shortcut(list *options, size_params params, network *net){
   int batch = params.batch;
   layer* from = net->layers[index];
 
-  layer* s = make_shortcut_layer(batch, index, params.w, params.h, params.c,
-                                 from->out_w, from->out_h, from->out_c);
+  //assert(from->out_w, from->out_h, from->out_c);
+  layer* s = make_shortcut_layer(batch, index, params.w, params.h, params.c);
 
   char *activation_s = option_find_str(options, "activation", "linear");
   ACTIVATION activation = get_activation(activation_s);

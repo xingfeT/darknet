@@ -6,16 +6,13 @@
 
 
 struct shortcut_layer :public layer{
-  void forward( network net) const ;
-  void backward( network net) const ;
+  void forward( network net)  ;
+  void backward( network net) ;
   void resize( int w, int h);
 };
-shortcut_layer* make_shortcut_layer(int batch, int index, int w, int h, int c, int w2, int h2, int c2);
+
+shortcut_layer* make_shortcut_layer(int batch, int index, int w, int h, int c);
 
 
-#ifdef GPU
-void forward_shortcut_layer_gpu(const layer l, network net);
-void backward_shortcut_layer_gpu(const layer l, network net);
-#endif
 
 #endif

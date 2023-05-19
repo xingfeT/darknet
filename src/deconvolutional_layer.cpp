@@ -32,9 +32,10 @@ void deconvolutional_layer::bilinear_init(){
 }
 
 
-deconvolutional_layer* make_deconvolutional_layer(int batch, int h, int w, int c, int n, int size,
-                                  int stride, int padding, ACTIVATION activation,
-                                  int batch_normalize, int adam){
+deconvolutional_layer* make_deconvolutional_layer(int batch, int h, int w, int c,
+                                                  int n, int size,
+                                                  int stride, int padding, ACTIVATION activation,
+                                                  int batch_normalize, int adam){
     int i;
     deconvolutional_layer* l = new deconvolutional_layer();
     l->type = DECONVOLUTIONAL;
@@ -43,6 +44,7 @@ deconvolutional_layer* make_deconvolutional_layer(int batch, int h, int w, int c
     l->w = w;
     l->c = c;
     l->n = n;
+    
     l->batch = batch;
     l->stride = stride;
     l->size = size;
@@ -108,55 +110,6 @@ deconvolutional_layer* make_deconvolutional_layer(int batch, int h, int w, int c
       l->scale_v = l->bias_v+n;
     }
 
-#ifdef GPU
-    l->forward_gpu = forward_deconvolutional_layer_gpu;
-    l->backward_gpu = backward_deconvolutional_layer_gpu;
-    l->update_gpu = update_deconvolutional_layer_gpu;
-
-    if(gpu_index >= 0){
-
-        if (adam) {
-            l->m_gpu = cuda_make_array(l->m, c*n*size*size);
-            l->v_gpu = cuda_make_array(l->v, c*n*size*size);
-            l->bias_m_gpu = cuda_make_array(l->bias_m, n);
-            l->bias_v_gpu = cuda_make_array(l->bias_v, n);
-            l->scale_m_gpu = cuda_make_array(l->scale_m, n);
-            l->scale_v_gpu = cuda_make_array(l->scale_v, n);
-        }
-        l->weights_gpu = cuda_make_array(l->weights, c*n*size*size);
-        l->weight_updates_gpu = cuda_make_array(l->weight_updates, c*n*size*size);
-
-        l->biases_gpu = cuda_make_array(l->biases, n);
-        l->bias_updates_gpu = cuda_make_array(l->bias_updates, n);
-
-        l->delta_gpu = cuda_make_array(l->delta, l->batch*l->out_h*l->out_w*n);
-        l->output_gpu = cuda_make_array(l->output, l->batch*l->out_h*l->out_w*n);
-
-        if(batch_normalize){
-            l->mean_gpu = cuda_make_array(0, n);
-            l->variance_gpu = cuda_make_array(0, n);
-
-            l->rolling_mean_gpu = cuda_make_array(0, n);
-            l->rolling_variance_gpu = cuda_make_array(0, n);
-
-            l->mean_delta_gpu = cuda_make_array(0, n);
-            l->variance_delta_gpu = cuda_make_array(0, n);
-
-            l->scales_gpu = cuda_make_array(l->scales, n);
-            l->scale_updates_gpu = cuda_make_array(0, n);
-
-            l->x_gpu = cuda_make_array(0, l->batch*l->out_h*l->out_w*n);
-            l->x_norm_gpu = cuda_make_array(0, l->batch*l->out_h*l->out_w*n);
-        }
-    }
-    #ifdef CUDNN
-        cudnnCreateTensorDescriptor(&l->dstTensorDesc);
-        cudnnCreateTensorDescriptor(&l->normTensorDesc);
-        cudnnSetTensor4dDescriptor(l->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l->batch, l->out_c, l->out_h, l->out_w); 
-        cudnnSetTensor4dDescriptor(l->normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, l->out_c, 1, 1); 
-    #endif
-#endif
-
     l->activation = activation;
     l->workspace_size = l->workspaceSize();
 
@@ -196,25 +149,6 @@ void deconvolutional_layer::resize(int h, int w){
       this->x_norm  = (float*)realloc(this->x_norm, this->batch*this->outputs*sizeof(float));
     }
 
-#ifdef GPU
-    cuda_free(this->delta_gpu);
-    cuda_free(this->output_gpu);
-
-    this->delta_gpu =  cuda_make_array(this->delta,  this->batch*this->outputs);
-    this->output_gpu = cuda_make_array(this->output, this->batch*this->outputs);
-
-    if(this->batch_normalize){
-        cuda_free(this->x_gpu);
-        cuda_free(this->x_norm_gpu);
-
-        this->x_gpu = cuda_make_array(this->output, this->batch*this->outputs);
-        this->x_norm_gpu = cuda_make_array(this->output, this->batch*this->outputs);
-    }
-    #ifdef CUDNN
-        cudnnSetTensor4dDescriptor(this->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, this->batch, this->out_c, this->out_h, this->out_w); 
-        cudnnSetTensor4dDescriptor(this->normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, this->out_c, 1, 1); 
-    #endif
-#endif
     this->workspace_size = this->workspaceSize();
 }
 

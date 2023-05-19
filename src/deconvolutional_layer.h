@@ -7,18 +7,10 @@
 #include "layer.h"
 #include "network.h"
 
-/* #ifdef GPU */
-/* void forward_deconvolutional_layer_gpu(layer l, network net); */
-/* void backward_deconvolutional_layer_gpu(layer l, network net); */
-/* void update_deconvolutional_layer_gpu(layer l, update_args a); */
-/* void push_deconvolutional_layer(layer l); */
-/* void pull_deconvolutional_layer(layer l); */
-/* #endif */
-
-
 struct deconvolutional_layer :public layer{
   void forward(struct network);
   void backward(struct network);
+  
   void update(update_args);
   void bilinear_init();
   void resize(int, int);

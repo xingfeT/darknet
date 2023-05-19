@@ -1,17 +1,26 @@
     add_library(dn
     im2col.cpp
 
+    col2im.cpp
+
     activations.cpp
     gemm.cpp
-
+    yolo_layer.cpp
 
     list.cc
 #    local_layer.cpp
-#    deconvolutional_layer.cpp
+    shortcut_layer.cpp
+    l2norm_layer.cpp
+    logistic_layer.cpp
+    activation_layer.cpp
+    upsample_layer.cpp
+    deconvolutional_layer.cpp
+
     convolutional_layer.cpp
     normalization_layer.cpp
     cuda.cpp
     weights.cpp
+    cost_layer.cpp
 
     crnn_layer.cpp
     rnn_layer.cpp
@@ -19,7 +28,6 @@
     lstm_layer.cpp
     connected_layer.cpp
     softmax_layer.cpp
-    yolo_layer.cpp
     iseg_layer.cpp
     region_layer.cpp
     detection_layer.cpp

@@ -1370,10 +1370,10 @@ data concat_datas(data *d, int n){
   return out;
 }
 
-data load_categorical_data_csv(char *filename, int target, int k){
+data load_categorical_data_csv(const char *filename, int target, int k){
   data d = {0};
   d.shallow = 0;
-  matrix X = csv_to_matrix(filename);
+  matrix X = matrix::from_csv(filename);
   float *truth_1d = pop_column(&X, target);
   float **truth = one_hot_encode(truth_1d, X.rows, k);
   matrix y(X.rows, y.cols);

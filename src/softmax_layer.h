@@ -8,7 +8,7 @@ void softmax_array(float *input, int n, float temp, float *output);
 struct softmax_layer : public layer{
   void forward( network net) ;
   void backward( network net)  ;
-  void update(update_args);
+  void update(update_args){}
 
 };
 

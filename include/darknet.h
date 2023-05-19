@@ -472,7 +472,8 @@ typedef struct detection{
     matrix():rows(0),cols(0),vals(nullptr){}
     void to_csv();
     void print() const;
-    static matrix from_csv(char *filename);
+    
+    static matrix from_csv(const char *filename);
     
 } ;
   
@@ -633,9 +634,11 @@ data copy_data(data d);
 data concat_data(data d1, data d2);
 data load_cifar10_data(char *filename);
 float matrix_topk_accuracy(matrix truth, matrix guess, int k);
-void matrix_add_matrix(matrix from, matrix to);
-void scale_matrix(matrix m, float scale);
-matrix csv_to_matrix(char *filename);
+  //void matrix_add_matrix(matrix from, matrix to);
+  //void scale_matrix(matrix m, float scale);
+
+  matrix csv_to_matrix(const char *filename);
+  
 float *network_accuracies(network *net, data d, int n);
 float train_network_datum(network *net);
 image make_random_image(int w, int h, int c);

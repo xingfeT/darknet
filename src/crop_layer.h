@@ -9,7 +9,7 @@ struct crop_layer :public layer{
   void resize(int w, int h);
   void forward(struct network);
   void backward(struct network);
-  void update(update_args);
+  void update(update_args){}
 };
 
 

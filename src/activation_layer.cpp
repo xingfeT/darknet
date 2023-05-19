@@ -9,59 +9,22 @@
 #include <stdlib.h>
 #include <string.h>
 
-template<unsigned int N>
-struct activation_layer{
-  void forward_activation_layer(layer l, network net){
-    copy_cpu(l.outputs*l.batch, net.input, 1, l.output, 1);
-    activate_array(l.output, l.outputs*l.batch, l.activation);
-  }
-
-  void backward_activation_layer(layer l, network net){
-    gradient_array(l.output, l.outputs*l.batch, l.activation, l.delta);
-    copy_cpu(l.outputs*l.batch, l.delta, 1, net.delta, 1);
-  }
-};
-
-template<unsigned int N=1>
-struct activation_layer{
-  void forward_activation_layer_gpu(layer l, network net){
-  copy_gpu(l.outputs*l.batch, net.input_gpu, 1, l.output_gpu, 1);
-  activate_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation);
-}
-
-void backward_activation_layer_gpu(layer l, network net){
-  gradient_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation, l.delta_gpu);
-  copy_gpu(l.outputs*l.batch, l.delta_gpu, 1, net.delta_gpu, 1);
-}
 
 
-/*   #ifdef GPU */
-/*   l.forward_gpu = forward_activation_layer_gpu; */
-/*   l.backward_gpu = backward_activation_layer_gpu; */
 
-/*   l.output_gpu = cuda_make_array(l.output, inputs*batch); */
-/*   l.delta_gpu = cuda_make_array(l.delta, inputs*batch); */
-/* #endif */
+activation_layer* make_activation_layer(int batch, int inputs, ACTIVATION activation){
+  activation_layer* l = new activation_layer();
+  l->type = ACTIVE;
 
-};
-
-layer make_activation_layer(int batch, int inputs, ACTIVATION activation){
-  layer l = {0};
-  l.type = ACTIVE;
-
-  l.inputs = inputs;
-  l.outputs = inputs;
-  l.batch=batch;
+  l->inputs = inputs;
+  l->outputs = inputs;
+  l->batch=batch;
 
 
-  l.output = calloc(batch*inputs, sizeof(float*));
-  l.delta = calloc(batch*inputs, sizeof(float*));
-  l.activation_layer = activation_layer<N>;
+  l->output = (float*)calloc(batch*inputs, sizeof(float*));
+  l->delta = (float*)calloc(batch*inputs, sizeof(float*));
 
-
-  l.forward = l.activation_layer::forward;
-  l.backward = l.activation_layer::backward;
-  l.activation = activation;
+  l->activation = activation;
   fprintf(stderr, "Activation Layer: %d inputs\n", inputs);
   return l;
 }
