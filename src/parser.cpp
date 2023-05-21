@@ -124,7 +124,7 @@ struct size_params{
   int h;
   int w;
   int c;
-  
+
   int index;
   int time_steps;
   network *net;
@@ -135,12 +135,12 @@ route_layer* parse_route(list *options, size_params params, network *net);
 
 // local_layer* parse_local(list *options, size_params params){
 //   int n = option_find(options, "filters",1);
-  
+
 //   int size = option_find(options, "size",1);
 //   int stride = option_find(options, "stride",1);
 //   int pad = option_find(options, "pad",0);
 //   char *activation_s = option_find_str(options, "activation", "logistic");
-  
+
 //   ACTIVATION activation = get_activation(activation_s);
 
 //   int batch,h,w,c;
@@ -199,7 +199,7 @@ convolutional_layer* parse_convolutional(list *options, size_params params){
     int xnor = option_find(options, "xnor", 0);
 
     convolutional_layer* layer = make_convolutional_layer(batch,h,w,c,n,groups,size,stride,padding,activation, batch_normalize, binary, xnor, params.net->adam);
-    
+
     layer->flipped = option_find(options, "flipped", 0);
     layer->dot = option_find(options, "dot", 0);
 
@@ -211,7 +211,7 @@ layer* parse_crnn(list *options, size_params params){
     int output_filters = option_find(options, "output_filters",1);
     int hidden_filters = option_find(options, "hidden_filters",1);
     char *activation_s = option_find_str(options, "activation", "logistic");
-    
+
     ACTIVATION activation = get_activation(activation_s);
     int batch_normalize = option_find(options, "batch_normalize", 0);
 
@@ -274,13 +274,13 @@ layer* parse_softmax(list *options, size_params params){
     l->temperature = option_find(options, "temperature", 1);
     char *tree_file = option_find_str(options, "tree", 0);
     if (tree_file) l->softmax_tree = read_tree(tree_file);
-    
+
     l->w = params.w;
     l->h = params.h;
     l->c = params.c;
     l->spatial = option_find(options, "spatial", 0);
     l->noloss =  option_find(options, "noloss", 0);
-    
+
     return l;
 }
 
@@ -311,7 +311,7 @@ layer* parse_yolo(list *options, size_params params){
 
     char *a = option_find_str(options, "mask", 0);
     int *mask = parse_yolo_mask(a, &num);
-    
+
     yolo_layer* l = make_yolo_layer(params.batch, params.w, params.h, num, total, mask, classes);
     assert(l->outputs == params.inputs);
 
@@ -407,7 +407,7 @@ detection_layer* parse_detection(list *options, size_params params){
   int rescore = option_find(options, "rescore", 0);
   int num = option_find(options, "num", 1);
   int side = option_find(options, "side", 7);
-  
+
   detection_layer* layer = make_detection_layer(params.batch, params.inputs,
                                                 num, side, classes, coords, rescore);
 
@@ -430,7 +430,7 @@ cost_layer* parse_cost(list *options, size_params params){
   char *type_s = option_find_str(options, "type", "sse");
   COST_TYPE type = get_cost_type(type_s);
   float scale = option_find(options, "scale",1);
-  
+
   cost_layer* layer = make_cost_layer(params.batch, params.inputs, type, scale);
   layer->ratio =  option_find(options, "ratio",0);
   layer->noobject_scale =  option_find(options, "noobj", 1);
@@ -451,7 +451,7 @@ crop_layer* parse_crop(list *options, size_params params){
   w = params.w;
   c = params.c;
   batch=params.batch;
-  
+
   if(!(h && w && c)) error("Layer before crop layer must output image.");
 
   int noadjust = option_find(options, "noadjust",0);
@@ -501,7 +501,7 @@ avgpool_layer* parse_avgpool(list *options, size_params params){
   h = params.h;
   c = params.c;
   batch=params.batch;
-  
+
   if(!(h && w && c)) error("Layer before avgpool layer must output image.");
 
   avgpool_layer* layer = make_avgpool_layer(batch,w,h,c);
@@ -511,11 +511,11 @@ avgpool_layer* parse_avgpool(list *options, size_params params){
 dropout_layer* parse_dropout(list *options, size_params params){
   float probability = option_find(options, "probability", 0.5);
   dropout_layer* layer = make_dropout_layer(params.batch, params.inputs, probability);
-  
+
   layer->out_w = params.w;
   layer->out_h = params.h;
   layer->out_c = params.c;
-  
+
   return layer;
 }
 
@@ -524,7 +524,7 @@ normalization_layer* parse_normalization(list *options, size_params params){
   float beta =  option_find(options, "beta" , .75);
   float kappa = option_find(options, "kappa", 1);
   int size = option_find(options, "size", 5);
-  
+
   normalization_layer* l = make_normalization_layer(params.batch, params.w, params.h, params.c,
                                                     size, alpha, beta, kappa);
   return l;
@@ -551,7 +551,7 @@ layer* parse_shortcut(list *options, size_params params, network *net){
   s->activation = activation;
   s->alpha = option_find(options, "alpha", 1);
   s->beta = option_find(options, "beta", 1);
-  
+
   return s;
 }
 
@@ -596,7 +596,7 @@ upsample_layer* parse_upsample(list *options, size_params params, network *net){
 
 // route_layer* parse_route(list *options, size_params params, network *net){
 //   char *l = option_find(options, "layers");
-  
+
 //   int len = strlen(l);
 //   if(!l) error("Route Layer must specify input layers");
 //   int n = 1;
@@ -607,7 +607,7 @@ upsample_layer* parse_upsample(list *options, size_params params, network *net){
 
 //   int *layers = (int*)calloc(n, sizeof(int));
 //   int *sizes = (int*)calloc(n, sizeof(int));
-  
+
 //   for(i = 0; i < n; ++i){
 //     int index = atoi(l);
 //     l = strchr(l, ',')+1;
@@ -623,7 +623,7 @@ upsample_layer* parse_upsample(list *options, size_params params, network *net){
 //   layer->out_w = f->out_w;
 //   layer->out_h = f->out_h;
 //   layer->out_c = f->out_c;
-  
+
 //   for(i = 1; i < n; ++i){
 //     int index = layers[i];
 //     layer* nxt = net->layers[index];
@@ -646,15 +646,16 @@ learning_rate_policy get_policy(char *s){
   if (strcmp(s, "sigmoid")==0) return SIG;
   if (strcmp(s, "steps")==0) return STEPS;
   fprintf(stderr, "Couldn't find policy %s, going with constant\n", s);
-  
+
   return CONSTANT;
 }
 
 void parse_net_options(list *options, network *net){
   net->batch = option_find(options, "batch",1);
-  net->learning_rate = option_find(options, "learning_rate", .001);
-  net->momentum = option_find(options, "momentum", .9);
-  net->decay = option_find(options, "decay", .0001);
+  net->learning_rate = option_find(options, "learning_rate", 0.001);
+  net->momentum = option_find(options, "momentum", 0.9);
+  net->decay = option_find(options, "decay", 0.0001);
+
   int subdivs = option_find(options, "subdivisions",1);
   net->time_steps = option_find(options, "time_steps",1);
   net->notruth = option_find(options, "notruth",0);
@@ -673,6 +674,7 @@ void parse_net_options(list *options, network *net){
   net->h = option_find(options, "height",0);
   net->w = option_find(options, "width",0);
   net->c = option_find(options, "channels",0);
+
   net->inputs = option_find(options, "inputs", net->h * net->w * net->c);
   net->max_crop = option_find(options, "max_crop",net->w*2);
   net->min_crop = option_find(options, "min_crop",net->w);
@@ -737,7 +739,7 @@ int is_network(section *s){
 
 network *parse_network_cfg(char *filename){
   list *sections = read_cfg(filename);
-    
+
   node *n = sections->front;
   if(!n) error("Config file has no sections");
   network *net = make_network(sections->size - 1);
@@ -768,7 +770,7 @@ network *parse_network_cfg(char *filename){
     s = (section *)n->val;
     options = s->options;
     layer* l =  nullptr;
-    
+
     LAYER_TYPE lt = string_to_layer_type(s->type);
     if(lt == CONVOLUTIONAL){
       //l = parse_convolutional(options, params);
@@ -809,7 +811,7 @@ network *parse_network_cfg(char *filename){
       net->hierarchy = l->softmax_tree;
     }else if(lt == NORMALIZATION){
        //l = parse_normalization(options, params);
-      
+
     }else if(lt == BATCHNORM){
        //l = parse_batchnorm(options, params);
     }else if(lt == MAXPOOL){
@@ -842,7 +844,7 @@ network *parse_network_cfg(char *filename){
     l->dontloadscales = option_find(options, "dontloadscales", 0);
     l->learning_rate_scale = option_find(options, "learning_rate", 1);
     l->smooth = option_find(options, "smooth", 0);
-    
+
     option_unused(options);
     net->layers[count] = l;
     if (l->workspace_size > workspace_size) workspace_size = l->workspace_size;
@@ -862,7 +864,7 @@ network *parse_network_cfg(char *filename){
   net->truths = out->outputs;
   if(net->layers[net->n-1]->truths){
     net->truths = net->layers[net->n-1]->truths;
-  } 
+  }
   net->output = out->output;
   net->input = (float*)calloc(net->inputs*net->batch, sizeof(float));
   net->truth = (float*)calloc(net->truths*net->batch, sizeof(float));
@@ -919,5 +921,3 @@ void transpose_matrix(float *a, int rows, int cols){
   memcpy(a, transpose, rows*cols*sizeof(float));
   free(transpose);
 }
-
-

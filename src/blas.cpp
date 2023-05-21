@@ -33,7 +33,7 @@ void reorg_cpu(float *x, int w, int h, int c, int batch, int stride,
 
 void flatten(float *x, int size, int layers, int batch, int forward){
   float *swap = (float*)calloc(size*layers*batch, sizeof(float));
-  
+
   for(int b = 0; b < batch; ++b){
     for(int c = 0; c < layers; ++c){
       for(int i = 0; i < size; ++i){
@@ -45,7 +45,7 @@ void flatten(float *x, int size, int layers, int batch, int forward){
     }
   }
   memcpy(x, swap, size*layers*batch*sizeof(float));
-  
+
   free(swap);
 }
 
@@ -176,7 +176,7 @@ void pow_cpu(int N, float ALPHA, float *X, int INCX, float *Y, int INCY)
 
 // y = a * x + y
 void axpy_cpu(int N, float ALPHA, float *X, int INCX, float *Y, int INCY){
-  
+
   for(int i = 0; i < N; ++i) {
     Y[i*INCY] += ALPHA*X[i*INCX];
   }
@@ -187,8 +187,11 @@ void scal_cpu(int N, float ALPHA, float *X, int INCX){
 }
 
 void fill_cpu(int N, float ALPHA, float *X, int INCX){
-  for(int i = 0; i < N; ++i) X[i*INCX] = ALPHA;
+  for(int i = 0; i < N; ++i) {
+    X[i*INCX] = ALPHA;
+  }
 }
+
 
 void deinter_cpu(int NX, float *X, int NY, float *Y, int B, float *OUT){
   int i, j;
@@ -332,5 +335,3 @@ void upsample_cpu(float *in, int w, int h, int c, int batch, int stride, int for
         }
     }
 }
-
-

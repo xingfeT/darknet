@@ -173,18 +173,17 @@ network *make_network(int n){
 
 void forward_network(network *netp){
     network net = *netp;
-    int i;
-    for(i = 0; i < net.n; ++i){
-        net.index = i;
-        layer* l = net.layers[i];
-        if(l->delta){
-            fill_cpu(l->outputs * l->batch, 0, l->delta, 1);
-        }
-        l->forward(net);
-        net.input = l->output;
-        if(l->truth) {
-            net.truth = l->output;
-        }
+    for(int i = 0; i < net.n; ++i){
+      net.index = i;
+      layer* l = net.layers[i];
+      if(l->delta != nullptr){
+        bzero(l->delta, sizeof(float)*l->outputs * l->batch);
+      }
+      l->forward(net);
+      net.input = l->output;
+      if(l->truth) {
+        net.truth = l->output;
+      }
     }
     calc_network_cost(netp);
 }
@@ -210,19 +209,17 @@ void update_network(network *netp){
     }
 }
 
-void calc_network_cost(network *netp)
-{
-    network net = *netp;
-    int i;
-    float sum = 0;
-    int count = 0;
-    for(i = 0; i < net.n; ++i){
-        if(net.layers[i]->cost){
-            sum += net.layers[i]->cost[0];
-            ++count;
-        }
+void calc_network_cost(network *netp){
+  network net = *netp;
+  float sum = 0;
+  int count = 0;
+  for(int i = 0; i < net.n; ++i){
+    if(net.layers[i]->cost){
+      sum += net.layers[i]->cost[0];
+      ++count;
     }
-    *net.cost = sum/count;
+  }
+  *net.cost = sum/count;
 }
 
 int get_predicted_class_network(network *net){
@@ -231,9 +228,8 @@ int get_predicted_class_network(network *net){
 
 void backward_network(network *netp){
   network net = *netp;
-  int i;
   network orig = net;
-  for(i = net.n-1; i >= 0; --i){
+  for(int i = net.n-1; i >= 0; --i){
     layer* l = net.layers[i];
     if(l->stopbackward) break;
 
@@ -255,7 +251,9 @@ float train_network_datum(network *net){
     forward_network(net);
     backward_network(net);
     float error = *net->cost;
-    if(((*net->seen)/net->batch)%net->subdivisions == 0) update_network(net);
+    if(((*net->seen)/net->batch)%net->subdivisions == 0){
+      update_network(net);
+    }
     return error;
 }
 
@@ -272,15 +270,13 @@ float train_network_sgd(network *net, data d, int n){
     return (float)sum/(n*batch);
 }
 
-float train_network(network *net, data d)
-{
+float train_network(network *net, data d){
     assert(d.X.rows % net->batch == 0);
     int batch = net->batch;
     int n = d.X.rows / batch;
 
-    int i;
     float sum = 0;
-    for(i = 0; i < n; ++i){
+    for(int i = 0; i < n; ++i){
         get_next_batch(d, batch, i*batch, net->input, net->truth);
         float err = train_network_datum(net);
         sum += err;

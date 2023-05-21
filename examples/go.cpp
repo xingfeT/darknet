@@ -7,6 +7,7 @@
 int inverted = 1;
 int noi = 1;
 static const int nind = 10;
+
 int legal_go(float *b, float *ko, int p, int r, int c);
 int check_ko(float *x, float *ko);
 
@@ -31,7 +32,7 @@ moves load_go_moves(char *filename){
     moves m;
     m.n = 128;
     m.data = (char**)calloc(128, sizeof(char*));
-    
+
     FILE *fp = fopen(filename, "rb");
     int count = 0;
     char *line = nullptr;
@@ -92,16 +93,16 @@ data random_go_moves(moves m, int n){
   data d;
   d.X = matrix(n, 19*19*3);
   d.y = matrix(n, 19*19+2);
-  
+
   int i, j;
   for(i = 0; i < n; ++i){
     float *board = d.X(i);
     float *label = d.y(i);
     char *b = m.data[rand()%m.n];
-    
+
     int player = b[0] - '0';
     int result = b[1] - '0';
-    
+
     int row = b[2];
     int col = b[3];
     string_to_board(b+4, board);
@@ -129,7 +130,10 @@ data random_go_moves(moves m, int n){
 }
 
 
-void train_go(char *cfgfile, char *weightfile, char *filename, int *gpus, int ngpus, int clear){
+void train_go(char *cfgfile, char *weightfile,
+              char *filename,
+              int *gpus, int ngpus,
+              int clear){
     int i;
     float avg_loss = -1;
     char *base = basecfg(cfgfile);
@@ -141,21 +145,17 @@ void train_go(char *cfgfile, char *weightfile, char *filename, int *gpus, int ng
     int seed = rand();
     for(i = 0; i < ngpus; ++i){
         srand(seed);
-#ifdef GPU
-        cuda_set_device(gpus[i]);
-#endif
         nets[i] = load_network(cfgfile, weightfile, clear);
         nets[i]->learning_rate *= ngpus;
     }
     network *net = nets[0];
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate,
+           net->momentum, net->decay);
 
     char *backup_directory = "/home/pjreddie/backup/";
 
     char buff[256];
     moves m = load_go_moves(filename);
-    //moves m = load_go_moves("games.txt");
-
     int N = m.n;
     printf("Moves: %d\n", N);
     int epoch = (*net->seen)/N;
@@ -167,15 +167,7 @@ void train_go(char *cfgfile, char *weightfile, char *filename, int *gpus, int ng
         time=what_time_is_it_now();
 
         float loss = 0;
-#ifdef GPU
-        if(ngpus == 1){
-            loss = train_network(net, train);
-        } else {
-            loss = train_networks(nets, ngpus, train, 10);
-        }
-#else
         loss = train_network(net, train);
-#endif
         free_data(train);
 
         if(avg_loss == -1) avg_loss = loss;
@@ -206,7 +198,8 @@ void train_go(char *cfgfile, char *weightfile, char *filename, int *gpus, int ng
     free(base);
 }
 
-static void propagate_liberty(float *board, int *lib, int *visited, int row, int col, int side){
+static void propagate_liberty(float *board, int *lib,
+                              int *visited, int row, int col, int side){
   if (row < 0 || row > 18 || col < 0 || col > 18) return;
 
   int index = row*19 + col;
@@ -225,7 +218,7 @@ static void propagate_liberty(float *board, int *lib, int *visited, int row, int
 static int *calculate_liberties(float *board){
   int *lib = (int*)calloc(19*19, sizeof(int));
   int visited[19*19];
-  
+
   int i, j;
   for(j = 0; j < 19; ++j){
     for(i = 0; i < 19; ++i){
@@ -253,7 +246,7 @@ void print_board(FILE *stream, float *board, int player, int *indexes){
     fprintf(stream, "%c ", 'A' + i + 1*(i > 7 && noi));
   }
   fprintf(stream, "\n");
-  
+
   for(j = 0; j < 19; ++j){
     fprintf(stream, "%2d", (inverted) ? 19-j : j+1);
     for(i = 0; i < 19; ++i){
@@ -285,19 +278,16 @@ void print_board(FILE *stream, float *board, int player, int *indexes){
   }
 }
 
-void flip_board(float *board)
-{
-    int i;
-    for(i = 0; i < 19*19; ++i){
-        float swap = board[i];
-        board[i] = board[i+19*19];
-        board[i+19*19] = swap;
-        board[i+19*19*2] = 1-board[i+19*19*2];
-    }
+void flip_board(float *board){
+  for(int i = 0; i < 19*19; ++i){
+    float swap = board[i];
+    board[i] = board[i+19*19];
+    board[i+19*19] = swap;
+    board[i+19*19*2] = 1-board[i+19*19*2];
+  }
 }
 
-float predict_move2(network *net, float *board, float *move, int multi)
-{
+float predict_move2(network *net, float *board, float *move, int multi){
     float *output = network_predict(net, board);
     copy_cpu(19*19+1, output, 1, move, 1);
     float result = output[19*19 + 1];
@@ -329,8 +319,7 @@ float predict_move2(network *net, float *board, float *move, int multi)
     return result;
 }
 
-static void remove_connected(float *b, int *lib, int p, int r, int c)
-{
+static void remove_connected(float *b, int *lib, int p, int r, int c){
     if (r < 0 || r >= 19 || c < 0 || c >= 19) return;
     if (occupied(b, r*19 + c) != p) return;
     if (lib[r*19 + c] != 1) return;
@@ -343,8 +332,7 @@ static void remove_connected(float *b, int *lib, int p, int r, int c)
 }
 
 
-void move_go(float *b, int p, int r, int c)
-{
+void move_go(float *b, int p, int r, int c){
     int *l = calculate_liberties(b);
     if(p > 0) b[r*19 + c] = 1;
     else b[19*19 + r*19 + c] = 1;
@@ -355,8 +343,7 @@ void move_go(float *b, int p, int r, int c)
     free(l);
 }
 
-int compare_board(float *a, float *b)
-{
+int compare_board(float *a, float *b){
     if(memcmp(a, b, 19*19*3*sizeof(float)) == 0) return 1;
     return 0;
 }
@@ -424,16 +411,16 @@ float *network_predict_rotations(network *net, float *next){
 
 mcts_tree *expand(float *next, float *ko, network *net){
   mcts_tree *root = (mcts_tree *)calloc(1, sizeof(mcts_tree));
-  
+
   root->board = next;
   root->children = (mcts_tree **)calloc(19*19+1, sizeof(mcts_tree*));
-    
+
   root->prior = (float *)calloc(19*19 + 1, sizeof(float));
   root->prob = (float *)calloc(19*19 + 1, sizeof(float));
   root->mean = (float *)calloc(19*19 + 1, sizeof(float));
   root->value = (float *)calloc(19*19 + 1, sizeof(float));
   root->visit_count = (int *)calloc(19*19 + 1, sizeof(int));
-    
+
   root->total_count = 1;
   int i;
   float *pred = network_predict_rotations(net, next);
@@ -462,7 +449,7 @@ float *copy_board(float *board){
 
 float select_mcts(mcts_tree *root, network *net, float *prev, float cpuct){
     if(root->done) return -root->result;
-    
+
     int i;
     float max = -1000;
     int max_i = 0;
@@ -721,7 +708,7 @@ fprintf(stderr, "%d: %c %d, %.2f%%\n", i+1, col + 'A' + 1*(col > 7 && noi), (inv
 if (row == 19) return -1;
 
 if (suicide_go(board, player, row, col)){
-return -1; 
+return -1;
 }
 
 if (suicide_go(board, player, index/19, index%19)){
@@ -820,7 +807,7 @@ void engine_go(char *filename, char *weightfile, int mcts_iters, float secs,
     flip_board(board);
     float *one = ( float *)calloc(19*19*3, sizeof(float));
     float *two =  (float *)calloc(19*19*3, sizeof(float));
-    
+
     int ponder_player = 0;
     int passed = 0;
     int move_num = 0;
@@ -883,20 +870,20 @@ void engine_go(char *filename, char *weightfile, int mcts_iters, float secs,
         } else if (!strcmp(buff, "known_command")){
             char comm[256];
             scanf("%s", comm);
-            int known = (!strcmp(comm, "protocol_version") || 
-                    !strcmp(comm, "name") || 
-                    !strcmp(comm, "version") || 
-                    !strcmp(comm, "known_command") || 
-                    !strcmp(comm, "list_commands") || 
-                    !strcmp(comm, "quit") || 
-                    !strcmp(comm, "boardsize") || 
-                    !strcmp(comm, "clear_board") || 
-                    !strcmp(comm, "komi") || 
-                    !strcmp(comm, "final_status_list") || 
-                    !strcmp(comm, "play") || 
-                    !strcmp(comm, "genmove_white") || 
-                    !strcmp(comm, "genmove_black") || 
-                    !strcmp(comm, "fixed_handicap") || 
+            int known = (!strcmp(comm, "protocol_version") ||
+                    !strcmp(comm, "name") ||
+                    !strcmp(comm, "version") ||
+                    !strcmp(comm, "known_command") ||
+                    !strcmp(comm, "list_commands") ||
+                    !strcmp(comm, "quit") ||
+                    !strcmp(comm, "boardsize") ||
+                    !strcmp(comm, "clear_board") ||
+                    !strcmp(comm, "komi") ||
+                    !strcmp(comm, "final_status_list") ||
+                    !strcmp(comm, "play") ||
+                    !strcmp(comm, "genmove_white") ||
+                    !strcmp(comm, "genmove_black") ||
+                    !strcmp(comm, "fixed_handicap") ||
                     !strcmp(comm, "genmove"));
             if(known) printf("=%s true\n\n", ids);
             else printf("=%s false\n\n", ids);
@@ -923,7 +910,7 @@ void engine_go(char *filename, char *weightfile, int mcts_iters, float secs,
             int indexes[] = {72, 288, 300, 60, 180, 174, 186, 66, 294};
             int i;
             for(i = 0; i < handicap; ++i){
-                board[indexes[i]] = 1;   
+                board[indexes[i]] = 1;
                 ++move_num;
             }
             root = move_mcts(root, -1);
@@ -1117,7 +1104,7 @@ void test_go(char *cfg, char *weights, int multi){
             int index = indexes[i];
             row = index / 19;
             col = index % 19;
-            
+
             if(row == 19){
                 printf("%d: Pass, %.2f%%\n", i+1, move[index]*100);
             } else {
@@ -1276,7 +1263,7 @@ void self_go(char *filename, char *weightfile, char *f2, char *w2, int multi){
         //sleep(1);
 
         if ((total%2==0) == (player==1)){
-            //mcts_iters = 4500;   
+            //mcts_iters = 4500;
             cpuct = 5;
         } else {
             //mcts_iters = 500;
@@ -1325,7 +1312,7 @@ void run_go(int argc, char **argv){
     }
 
     char *gpu_list = find_char_arg(argc, argv, "-gpus", 0);
-    
+
     int *gpus = 0;
     int gpu = 0;
     int ngpus = 0;
@@ -1366,5 +1353,3 @@ void run_go(int argc, char **argv){
     else if(0==strcmp(argv[2], "test")) test_go(cfg, weights, multi);
     else if(0==strcmp(argv[2], "engine")) engine_go(cfg, weights, iters, time, temp, cpuct, anon, resign);
 }
-
-
